@@ -1,3 +1,184 @@
-@page "/sign_up"
+@page "/signup"
+@using System.ComponentModel.DataAnnotations
 
-<h1>Sign Up</h1>
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Create Account
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Start tracking your mood today
+        </MudText>
+
+        <EditForm Model="@model" OnValidSubmit="HandleSignup">
+            <DataAnnotationsValidator />
+
+            <MudTextField @bind-Value="model.FullName"
+                          Label="Full Name"
+                          Variant="Variant.Outlined"
+                          For="@(() => model.FullName)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="model.Email"
+                          Label="Email"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Email"
+                          For="@(() => model.Email)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="model.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="@PasswordInput"
+                          For="@(() => model.Password)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@PasswordInputIcon"
+                          OnAdornmentClick="TogglePasswordVisibility"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="model.ConfirmPassword"
+                          Label="Confirm Password"
+                          Variant="Variant.Outlined"
+                          InputType="@ConfirmPasswordInput"
+                          For="@(() => model.ConfirmPassword)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@ConfirmPasswordInputIcon"
+                          OnAdornmentClick="ToggleConfirmPasswordVisibility"
+                          Class="mb-4" />
+
+            <MudCheckBox @bind-Value="model.AcceptTerms"
+                         For="@(() => model.AcceptTerms)"
+                         Color="Color.Primary"
+                         Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    I agree to the <MudLink Href="/terms">Terms of Service</MudLink> and <MudLink Href="/privacy">Privacy Policy</MudLink>
+                </MudText>
+            </MudCheckBox>
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Size="Size.Large"
+                       Class="mb-4">
+                Create Account
+            </MudButton>
+
+            <MudDivider Class="my-4" />
+
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.body2">Already have an account?</MudText>
+                <MudLink Href="/login" Typo="Typo.body2">
+                    Sign in
+                </MudLink>
+            </MudStack>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">
+                @errorMessage
+            </MudAlert>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-4">
+                @successMessage
+            </MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private SignupModel model = new();
+    private bool isPasswordVisible;
+    private bool isConfirmPasswordVisible;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private InputType PasswordInput => isPasswordVisible ? InputType.Text : InputType.Password;
+    private string PasswordInputIcon => isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+
+    private InputType ConfirmPasswordInput => isConfirmPasswordVisible ? InputType.Text : InputType.Password;
+    private string ConfirmPasswordInputIcon => isConfirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        isPasswordVisible = !isPasswordVisible;
+    }
+
+    private void ToggleConfirmPasswordVisibility()
+    {
+        isConfirmPasswordVisible = !isConfirmPasswordVisible;
+    }
+
+    private async Task HandleSignup()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+
+            // Implement your registration logic here
+            // Example:
+            // var result = await AuthService.RegisterAsync(model.FullName, model.Email, model.Password);
+            // if (result.Success)
+            // {
+            //     successMessage = "Account created successfully! Redirecting...";
+            //     await Task.Delay(2000);
+            //     NavigationManager.NavigateTo("/login");
+            // }
+
+            // For demo purposes
+            await Task.Delay(500);
+            successMessage = "Account created successfully!";
+            // NavigationManager.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during registration. Please try again.";
+        }
+    }
+
+    public class SignupModel : IValidatableObject
+    {
+        [Required(ErrorMessage = "Full name is required")]
+        [MinLength(2, ErrorMessage = "Name must be at least 2 characters")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", 
+            ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms and conditions")]
+        public bool AcceptTerms { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (Password != ConfirmPassword)
+            {
+                yield return new ValidationResult(
+                    "Passwords do not match",
+                    new[] { nameof(ConfirmPassword) });
+            }
+        }
+    }
+}
