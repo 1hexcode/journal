@@ -1,0 +1,29 @@
+@page "/journal_rte"
+
+@inject IJSRuntime JS
+
+<h3>Write Content</h3>
+
+<div id="editor" style="height:200px; background:white;"></div>
+
+<MudButton @onclick="Save">Save</MudButton>
+
+<h4>Stored HTML</h4>
+<pre>@HtmlContent</pre>
+
+@code {
+    private string HtmlContent = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initQuill", "editor");
+        }
+    }
+
+    private async Task Save()
+    {
+        HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+    }
+}

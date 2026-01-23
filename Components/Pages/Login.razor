@@ -1,5 +1,7 @@
-@page "/login"
+@attribute [Route(Login.Route)]
 @using System.ComponentModel.DataAnnotations
+@using System.Diagnostics
+@inject NavigationManager NavigationManager
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
     <MudPaper Elevation="3" Class="pa-8">
@@ -10,8 +12,9 @@
             Sign in to track your mood
         </MudText>
 
-        <EditForm Model="@model" OnValidSubmit="HandleLogin">
+        <EditForm Model="@model" OnSubmit="HandleLogin">
             <DataAnnotationsValidator />
+            <ValidationSummary></ValidationSummary>
 
             <MudTextField @bind-Value="model.Email"
                           Label="Email"
@@ -66,17 +69,36 @@
                 @errorMessage
             </MudAlert>
         }
+        @message
     </MudPaper>
 </MudContainer>
 
 @code {
+    string message = "";
     private LoginModel model = new();
     private bool isPasswordVisible;
     private string errorMessage = string.Empty;
 
     private InputType PasswordInput => isPasswordVisible ? InputType.Text : InputType.Password;
     private string PasswordInputIcon => isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    
+    // Preferences.Set("username", "user");
 
+     /*protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        string username = Preferences.Get("username", "");
+        if (username == "")
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/home");
+        }
+    }
+    */
     private void TogglePasswordVisibility()
     {
         isPasswordVisible = !isPasswordVisible;
@@ -84,20 +106,15 @@
 
     private async Task HandleLogin()
     {
+        message = "handle login";
         try
         {
-            // Implement your authentication logic here
-            // Example:
-            // var result = await AuthService.LoginAsync(model.Email, model.Password, model.RememberMe);
-            // if (result.Success)
-            // {
-            //     NavigationManager.NavigateTo("/dashboard");
-            // }
-            
             errorMessage = string.Empty;
             // For demo purposes
-            await Task.Delay(500);
-            // NavigationManager.NavigateTo("/dashboard");
+            // await Task.Delay(500);
+            Debug.WriteLine("Hellooo");
+            Preferences.Set("username", "john");
+            NavigationManager.NavigateTo("/home");
         }
         catch (Exception ex)
         {
