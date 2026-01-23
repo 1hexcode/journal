@@ -1,0 +1,8 @@
+.markdown-preview h1 { font-size: 2em; margin: 0.67em 0; font-weight: bold; }
+.markdown-preview h2 { font-size: 1.5em; margin: 0.75em 0; font-weight: bold; }
+.markdown-preview h3 { font-size: 1.17em; margin: 0.83em 0; font-weight: bold; }
+.markdown-preview p { margin: 1em 0; }
+.markdown-preview ul { margin: 1em 0; padding-left: 2em; }
+.markdown-preview li { margin: 0.5em 0; }
+.markdown-preview strong { font-weight: bold; }
+.markdown-preview em { font-style: italic; }

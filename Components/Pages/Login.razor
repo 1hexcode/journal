@@ -1,3 +1,120 @@
 @page "/login"
+@using System.ComponentModel.DataAnnotations
 
-<h1>Login</h1>
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Welcome Back
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Sign in to track your mood
+        </MudText>
+
+        <EditForm Model="@model" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <MudTextField @bind-Value="model.Email"
+                          Label="Email"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Email"
+                          For="@(() => model.Email)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+
+            <MudTextField @bind-Value="model.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="@PasswordInput"
+                          For="@(() => model.Password)"
+                          FullWidth="true"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@PasswordInputIcon"
+                          OnAdornmentClick="TogglePasswordVisibility"
+                          Class="mb-4" />
+
+            <MudCheckBox @bind-Value="model.RememberMe" 
+                         Label="Remember me" 
+                         Color="Color.Primary"
+                         Class="mb-4" />
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Size="Size.Large"
+                       Class="mb-4">
+                Sign In
+            </MudButton>
+
+            <MudDivider Class="my-4" />
+
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudLink Href="/forgot-password" Typo="Typo.body2">
+                    Forgot password?
+                </MudLink>
+                <MudLink Href="/signup" Typo="Typo.body2">
+                    Create account
+                </MudLink>
+            </MudStack>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">
+                @errorMessage
+            </MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginModel model = new();
+    private bool isPasswordVisible;
+    private string errorMessage = string.Empty;
+
+    private InputType PasswordInput => isPasswordVisible ? InputType.Text : InputType.Password;
+    private string PasswordInputIcon => isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        isPasswordVisible = !isPasswordVisible;
+    }
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            // Implement your authentication logic here
+            // Example:
+            // var result = await AuthService.LoginAsync(model.Email, model.Password, model.RememberMe);
+            // if (result.Success)
+            // {
+            //     NavigationManager.NavigateTo("/dashboard");
+            // }
+            
+            errorMessage = string.Empty;
+            // For demo purposes
+            await Task.Delay(500);
+            // NavigationManager.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Invalid email or password. Please try again.";
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}

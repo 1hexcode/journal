@@ -1,17 +1,61 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
 
-        <article class="content px-4">
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" 
+                       Color="Color.Inherit" 
+                       Edge="Edge.Start" 
+                       OnClick="@ToggleDrawer"
+                       Class="mr-2" />
+        <MudText Typo="Typo.h5">My Journal</MudText>
+        <MudSpacer />
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="@_drawerOpen" 
+               Elevation="2"
+               ClipMode="DrawerClipMode.Docked">
+
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="/journal" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Book">
+                Journal
+            </MudNavLink>
+            <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings" Expanded="false">
+                <MudNavLink Href="/settings/users" Icon="@Icons.Material.Filled.People">
+                    Users
+                </MudNavLink>
+                <MudNavLink Href="/settings/security" Icon="@Icons.Material.Filled.Security">
+                    Security
+                </MudNavLink>
+            </MudNavGroup>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">
+                Login
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
