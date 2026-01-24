@@ -1,65 +1,33 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
+@layout ParentLayout
+
 <MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
 
-
-
-<MudLayout>
-    <!-- 
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" 
-                       Color="Color.Inherit" 
-                       Edge="Edge.Start" 
-                       OnClick="@ToggleDrawer"
-                       Class="mr-2" />
-        <MudText Typo="Typo.h5">My Journal</MudText>
-        <MudSpacer />
-    </MudAppBar>
-    
-    <MudDrawer @bind-Open="@_drawerOpen"  Elevation="2"  ClipMode="DrawerClipMode.Docked">
-
-        <MudNavMenu>
-            <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-                Home
-            </MudNavLink>
-            <MudNavLink Href="/journal" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Book">
-                Journal
-            </MudNavLink>
-            <MudNavLink Href="/journal_rte" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Book">
-                Journal RTE
-            </MudNavLink>
-            <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings" Expanded="false">
-                <MudNavLink Href="/settings/users" Icon="@Icons.Material.Filled.People">
-                    Users
-                </MudNavLink>
-                <MudNavLink Href="/settings/security" Icon="@Icons.Material.Filled.Security">
-                    Security
-                </MudNavLink>
-            </MudNavGroup>
-            <MudDivider Class="my-2" />
-            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Login">
-                Login
-            </MudNavLink>
-        </MudNavMenu>
-    </MudDrawer>
-    
-    -->
+<MudAppBar Color="Color.Transparent" Elevation="0">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Primary" Edge="Edge.Start"
+        OnClick="@((e) => DrawerToggle())" />
+    <MudText Style="font-weight: bold; font-size: 16px" Color="Color.Primary">@_title</MudText>
+    <MudSpacer />
+    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+        <!-- <MudTooltip Text="@Enum.GetName(AuthService.CurrentUser.Role)"> -->
+        <MudTooltip Text="Admin">
+            <!-- <MudChip Icon="@Icons.Material.Filled.AccountCircle" Color="@(AuthService.CurrentUser.Role == UserRole.Admin ? Color.Warning : Color.Default)"> -->
+            <MudChip T="string" Icon="@Icons.Material.Filled.AccountCircle" Color="@Color.Default">
+                <!-- <MudText Typo="Typo.body1">@AuthService.CurrentUser.FullName</MudText> -->
+                <MudText Typo="Typo.body1">Test</MudText>
+            </MudChip>
+        </MudTooltip>
+        <SyncDataButton />
+        <DarkModeButton />
+        <LogoutButton />
+    </MudStack>
+</MudAppBar>
+<MudDrawer @bind-Open="@_drawerOpen">
     <NavMenu />
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
-
-@code {
-    private bool _drawerOpen = true;
-
-    private void ToggleDrawer()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-}
+</MudDrawer>
+<MudMainContent>
+    <CascadingValue Value="SetAppBarTitle">
+        @Body
+    </CascadingValue>
+</MudMainContent>

@@ -1,8 +1,11 @@
-﻿@page "/home"
+﻿@attribute [Route(Home.Route)]
+
+@inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
     <!-- Welcome Hero Section -->
-    <MudPaper Elevation="0" Class="pa-8 mb-6" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px;">
+    <MudPaper Elevation="0" Class="pa-8 mb-6"
+        Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px;">
         <MudGrid>
             <MudItem xs="12" md="8">
                 <MudText Typo="Typo.h3" Style="color: white; font-weight: 600;" Class="mb-3">
@@ -11,18 +14,14 @@
                 <MudText Typo="Typo.h6" Style="color: rgba(255,255,255,0.9);" Class="mb-4">
                     How are you feeling today? Take a moment to reflect and track your journey.
                 </MudText>
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Surface" 
-                           Size="Size.Large"
-                           Href="/journal"
-                           StartIcon="@Icons.Material.Filled.Create"
-                           Class="mt-2">
+                <MudButton Variant="Variant.Filled"  Style="color: white" Size="Size.Large" Href="/journal"
+                    StartIcon="@Icons.Material.Filled.Create" Class="mt-2">
                     Write in Journal
                 </MudButton>
             </MudItem>
             <MudItem xs="12" md="4" Class="d-flex align-center justify-center">
-                <MudIcon Icon="@Icons.Material.Filled.SelfImprovement" 
-                         Style="font-size: 120px; color: rgba(255,255,255,0.3);" />
+                <MudIcon Icon="@Icons.Material.Filled.SelfImprovement"
+                    Style="font-size: 120px; color: rgba(255,255,255,0.3);" />
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -32,9 +31,7 @@
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Elevation="2" Class="pa-4" Style="border-radius: 12px;">
                 <MudStack Row="false" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" 
-                             Color="Color.Primary" 
-                             Size="Size.Large" />
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" Size="Size.Large" />
                     <MudText Typo="Typo.h4" Class="font-weight-bold">@totalEntries</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">Total Entries</MudText>
                 </MudStack>
@@ -43,9 +40,8 @@
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Elevation="2" Class="pa-4" Style="border-radius: 12px;">
                 <MudStack Row="false" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" 
-                             Color="Color.Warning" 
-                             Size="Size.Large" />
+                    <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Warning"
+                        Size="Size.Large" />
                     <MudText Typo="Typo.h4" Class="font-weight-bold">@currentStreak</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">Day Streak</MudText>
                 </MudStack>
@@ -54,9 +50,7 @@
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Elevation="2" Class="pa-4" Style="border-radius: 12px;">
                 <MudStack Row="false" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.EventAvailable" 
-                             Color="Color.Success" 
-                             Size="Size.Large" />
+                    <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Color="Color.Success" Size="Size.Large" />
                     <MudText Typo="Typo.h4" Class="font-weight-bold">@thisMonth</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">This Month</MudText>
                 </MudStack>
@@ -65,9 +59,7 @@
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Elevation="2" Class="pa-4" Style="border-radius: 12px;">
                 <MudStack Row="false" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" 
-                             Color="Color.Info" 
-                             Size="Size.Large" />
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Large" />
                     <MudText Typo="Typo.h4" Class="font-weight-bold">@avgWords</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">Avg Words</MudText>
                 </MudStack>
@@ -81,10 +73,8 @@
             <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 12px;">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                     <MudText Typo="Typo.h5" Class="font-weight-bold">Recent Entries</MudText>
-                    <MudButton Variant="Variant.Text" 
-                               Color="Color.Primary"
-                               Href="/journal"
-                               EndIcon="@Icons.Material.Filled.ArrowForward">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/journal"
+                        EndIcon="@Icons.Material.Filled.ArrowForward">
                         View All
                     </MudButton>
                 </MudStack>
@@ -94,8 +84,9 @@
                     <MudStack Row="false" Spacing="3">
                         @foreach (var entry in recentEntries.Take(3))
                         {
-                            <MudPaper Elevation="0" Class="pa-4" Style="border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer;"
-                                      @onclick="@(() => NavigateToEntry(entry.Date))">
+                            <MudPaper Elevation="0" Class="pa-4"
+                                Style="border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer;"
+                                @onclick="@(() => NavigateToEntry(entry.Date))">
                                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
                                     <MudStack Row="false" Spacing="1" Style="flex: 1;">
                                         <MudText Typo="Typo.h6" Class="font-weight-bold">@entry.Title</MudText>
@@ -106,9 +97,8 @@
                                             @GetPreview(entry.Content)
                                         </MudText>
                                     </MudStack>
-                                    <MudIcon Icon="@GetMoodIcon(entry.Mood)" 
-                                             Color="@GetMoodColor(entry.Mood)" 
-                                             Size="Size.Large" />
+                                    <MudIcon Icon="@GetMoodIcon(entry.Mood)" Color="@GetMoodColor(entry.Mood)"
+                                        Size="Size.Large" />
                                 </MudStack>
                             </MudPaper>
                         }
@@ -117,18 +107,14 @@
                 else
                 {
                     <MudStack AlignItems="AlignItems.Center" Class="pa-8">
-                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" 
-                                 Style="font-size: 80px; color: #e0e0e0;" />
+                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" Style="font-size: 80px; color: #e0e0e0;" />
                         <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-4">
                             No entries yet
                         </MudText>
                         <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mt-2">
                             Start your journaling journey today
                         </MudText>
-                        <MudButton Variant="Variant.Filled" 
-                                   Color="Color.Primary"
-                                   Href="/journal"
-                                   Class="mt-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/journal" Class="mt-4">
                             Create First Entry
                         </MudButton>
                     </MudStack>
@@ -146,12 +132,9 @@
                         @foreach (var mood in moods)
                         {
                             <MudButton Variant="@(selectedMood == mood.Value ? Variant.Filled : Variant.Outlined)"
-                                       Color="@mood.Color"
-                                       FullWidth="true"
-                                       StartIcon="@mood.Icon"
-                                       OnClick="@(() => SelectMood(mood.Value))"
-                                       Size="Size.Large"
-                                       Style="justify-content: flex-start;">
+                                Color="@mood.Color" FullWidth="true" StartIcon="@mood.Icon"
+                                OnClick="@(() => SelectMood(mood.Value))" Size="Size.Large"
+                                Style="justify-content: flex-start;">
                                 @mood.Label
                             </MudButton>
                         }
@@ -162,45 +145,33 @@
                 <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 12px;">
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-4">Quick Actions</MudText>
                     <MudStack Row="false" Spacing="2">
-                        <MudButton Variant="Variant.Text" 
-                                   Color="Color.Primary"
-                                   FullWidth="true"
-                                   StartIcon="@Icons.Material.Filled.Create"
-                                   Href="/journal"
-                                   Style="justify-content: flex-start;">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true"
+                            StartIcon="@Icons.Material.Filled.Create" Href="/journal"
+                            Style="justify-content: flex-start;">
                             New Entry
                         </MudButton>
-                        <MudButton Variant="Variant.Text" 
-                                   Color="Color.Primary"
-                                   FullWidth="true"
-                                   StartIcon="@Icons.Material.Filled.Insights"
-                                   Style="justify-content: flex-start;">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true"
+                            StartIcon="@Icons.Material.Filled.Insights" Style="justify-content: flex-start;">
                             View Insights
                         </MudButton>
-                        <MudButton Variant="Variant.Text" 
-                                   Color="Color.Primary"
-                                   FullWidth="true"
-                                   StartIcon="@Icons.Material.Filled.Search"
-                                   Href="/journal"
-                                   Style="justify-content: flex-start;">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true"
+                            StartIcon="@Icons.Material.Filled.Search" Href="/journal"
+                            Style="justify-content: flex-start;">
                             Search Entries
                         </MudButton>
                         <MudDivider Class="my-2" />
-                        <MudButton Variant="Variant.Text" 
-                                   Color="Color.Secondary"
-                                   FullWidth="true"
-                                   StartIcon="@Icons.Material.Filled.Settings"
-                                   Style="justify-content: flex-start;">
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" FullWidth="true"
+                            StartIcon="@Icons.Material.Filled.Settings" Style="justify-content: flex-start;">
                             Settings
                         </MudButton>
                     </MudStack>
                 </MudPaper>
 
                 <!-- Inspirational Quote -->
-                <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <MudIcon Icon="@Icons.Material.Filled.FormatQuote" 
-                             Style="color: rgba(255,255,255,0.5); font-size: 40px;" 
-                             Class="mb-2" />
+                <MudPaper Elevation="2" Class="pa-6"
+                    Style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <MudIcon Icon="@Icons.Material.Filled.FormatQuote"
+                        Style="color: rgba(255,255,255,0.5); font-size: 40px;" Class="mb-2" />
                     <MudText Typo="Typo.body1" Style="color: white; font-style: italic;" Class="mb-3">
                         "@dailyQuote"
                     </MudText>
@@ -226,13 +197,16 @@
     private List<JournalEntryPreview> recentEntries = new();
 
     private List<MoodOption> moods = new()
-    {
-        new MoodOption { Label = "Great", Value = "great", Icon = Icons.Material.Filled.SentimentVerySatisfied, Color = Color.Success },
-        new MoodOption { Label = "Good", Value = "good", Icon = Icons.Material.Filled.SentimentSatisfied, Color = Color.Info },
-        new MoodOption { Label = "Okay", Value = "okay", Icon = Icons.Material.Filled.SentimentNeutral, Color = Color.Warning },
-        new MoodOption { Label = "Bad", Value = "bad", Icon = Icons.Material.Filled.SentimentDissatisfied, Color = Color.Error },
-        new MoodOption { Label = "Terrible", Value = "terrible", Icon = Icons.Material.Filled.SentimentVeryDissatisfied, Color = Color.Dark }
-    };
+{
+new MoodOption { Label = "Great", Value = "great", Icon = Icons.Material.Filled.SentimentVerySatisfied, Color =
+Color.Success },
+new MoodOption { Label = "Good", Value = "good", Icon = Icons.Material.Filled.SentimentSatisfied, Color = Color.Info },
+new MoodOption { Label = "Okay", Value = "okay", Icon = Icons.Material.Filled.SentimentNeutral, Color = Color.Warning },
+new MoodOption { Label = "Bad", Value = "bad", Icon = Icons.Material.Filled.SentimentDissatisfied, Color = Color.Error
+},
+new MoodOption { Label = "Terrible", Value = "terrible", Icon = Icons.Material.Filled.SentimentVeryDissatisfied, Color =
+Color.Dark }
+};
 
     protected override async Task OnInitializedAsync()
     {
@@ -244,32 +218,32 @@
     {
         // Sample data - replace with actual database calls
         recentEntries = new List<JournalEntryPreview>
-        {
-            new JournalEntryPreview
-            {
-                Title = "A Productive Day",
-                Date = DateTime.Today.AddDays(-1),
-                Content = "Today was incredibly productive. I managed to complete all my tasks and even had time for a walk in the park. The weather was perfect, and I felt a great sense of accomplishment.",
-                WordCount = 245,
-                Mood = "great"
-            },
-            new JournalEntryPreview
-            {
-                Title = "Reflection on the Week",
-                Date = DateTime.Today.AddDays(-2),
-                Content = "This week has been full of challenges but also growth. I learned a lot about myself and how I handle stress. Looking forward to a relaxing weekend.",
-                WordCount = 189,
-                Mood = "good"
-            },
-            new JournalEntryPreview
-            {
-                Title = "Morning Thoughts",
-                Date = DateTime.Today.AddDays(-3),
-                Content = "Woke up feeling refreshed and ready to tackle the day. Sometimes a good night's sleep makes all the difference.",
-                WordCount = 156,
-                Mood = "good"
-            }
-        };
+{
+new JournalEntryPreview
+{
+Title = "A Productive Day",
+Date = DateTime.Today.AddDays(-1),
+Content = "Today was incredibly productive. I managed to complete all my tasks and even had time for a walk in the park. The weather was perfect, and I felt a great sense of accomplishment.",
+WordCount = 245,
+Mood = "great"
+},
+new JournalEntryPreview
+{
+Title = "Reflection on the Week",
+Date = DateTime.Today.AddDays(-2),
+Content = "This week has been full of challenges but also growth. I learned a lot about myself and how I handle stress. Looking forward to a relaxing weekend.",
+WordCount = 189,
+Mood = "good"
+},
+new JournalEntryPreview
+{
+Title = "Morning Thoughts",
+Date = DateTime.Today.AddDays(-3),
+Content = "Woke up feeling refreshed and ready to tackle the day. Sometimes a good night's sleep makes all the difference.",
+WordCount = 156,
+Mood = "good"
+}
+};
     }
 
     private string GetGreeting()
@@ -284,7 +258,7 @@
     {
         if (string.IsNullOrWhiteSpace(content))
             return "No content";
-        
+
         return content.Length > 120 ? content.Substring(0, 120) + "..." : content;
     }
 

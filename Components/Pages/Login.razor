@@ -1,10 +1,16 @@
 @attribute [Route(Login.Route)]
+
 @using System.ComponentModel.DataAnnotations
 @using System.Diagnostics
+@layout EmptyLayout
+
 @inject NavigationManager NavigationManager
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
-    <MudPaper Elevation="3" Class="pa-8">
+<MudContainer MaxWidth="MaxWidth.False"
+              Class="d-flex align-center justify-center"
+              Style="height:100vh;">
+    
+    <MudPaper Elevation="3" Class="pa-8"  Style="max-width:500px; width:100%;">
         <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
             Welcome Back
         </MudText>
@@ -13,7 +19,7 @@
         </MudText>
 
         <EditForm Model="@model" OnSubmit="HandleLogin">
-            <DataAnnotationsValidator />
+            <DataAnnotationsValidator/>
             <ValidationSummary></ValidationSummary>
 
             <MudTextField @bind-Value="model.Email"
@@ -23,7 +29,7 @@
                           For="@(() => model.Email)"
                           FullWidth="true"
                           Margin="Margin.Dense"
-                          Class="mb-4" />
+                          Class="mb-4"/>
 
             <MudTextField @bind-Value="model.Password"
                           Label="Password"
@@ -35,12 +41,12 @@
                           Adornment="Adornment.End"
                           AdornmentIcon="@PasswordInputIcon"
                           OnAdornmentClick="TogglePasswordVisibility"
-                          Class="mb-4" />
+                          Class="mb-4"/>
 
-            <MudCheckBox @bind-Value="model.RememberMe" 
-                         Label="Remember me" 
+            <MudCheckBox @bind-Value="model.RememberMe"
+                         Label="Remember me"
                          Color="Color.Primary"
-                         Class="mb-4" />
+                         Class="mb-4"/>
 
             <MudButton ButtonType="ButtonType.Submit"
                        Variant="Variant.Filled"
@@ -51,7 +57,7 @@
                 Sign In
             </MudButton>
 
-            <MudDivider Class="my-4" />
+            <MudDivider Class="my-4"/>
 
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                 <MudLink Href="/forgot-password" Typo="Typo.body2">

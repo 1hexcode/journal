@@ -1,5 +1,33 @@
-﻿@page "/not-found"
-@layout MainLayout
+﻿@attribute [Route(NotFound.Route)]
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+@layout EmptyLayout
+
+<div class="journal-gradient d-flex align-center justify-center">
+
+    <MudContainer MaxWidth="MaxWidth.Small">
+        <MudPaper Elevation="3" Class="pa-10 text-center journal-card">
+
+            <MudIcon Icon="@Icons.Material.Filled.MenuBook"
+                     Color="Color.Primary"
+                     Size="Size.Large"
+                     Class="mb-4" />
+
+            <MudText Typo="Typo.h4" Color="Color.Dark" GutterBottom>
+                This page wasn’t written
+            </MudText>
+
+            <MudText Typo="Typo.body2" Color="Color.Dark" Class="mb-6">
+                Sometimes, blank pages are part of the journey.
+            </MudText>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Login"
+                       Href="@Login.Route">
+                Back to Login
+            </MudButton>
+
+        </MudPaper>
+    </MudContainer>
+
+</div>

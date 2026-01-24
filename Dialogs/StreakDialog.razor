@@ -1,0 +1,41 @@
+@using MudBlazor
+
+
+<MudDialog MaxWidth="MaxWidth.Large" FullWidth="true" CloseOnEscapeKey="true">
+    <DialogContent>
+        <!-- Badge Icon -->
+        <MudIcon Icon="@Icons.Material.Filled.Whatshot"  Size="Size.Large" Color="Color.Warning" Style="font-size: 64px; margin-bottom:1rem; " />
+
+        <!-- Title -->
+        <MudText Typo="Typo.h5" Class="mb-2" Align="Align.Center">
+            New badge unlocked!
+        </MudText>
+
+        <!-- Message -->
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary"  Align="Align.Center" Class="mb-4">
+            Congrats! You’ve just completed a <b>@StreakDays</b>-day streak.
+        </MudText>
+
+        <!-- Level / streak indicator -->
+        <MudPaper Elevation="1" Class="pa-4 mb-4" Style="border-radius: 16px; min-width: 180px; align-items: center">
+            <MudText Typo="Typo.subtitle2">Daily Streak</MudText>
+            <MudText Typo="Typo.h6">Level @Level</MudText>
+        </MudPaper>
+
+        <!-- Continue Button -->
+        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" OnClick="Close" Style="align-items: center">
+            Continue
+        </MudButton>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public int StreakDays { get; set; } = 0;
+    [Parameter] public int Level { get; set; } = 1; // optional streak level
+
+    private void Close()
+    {
+        MudDialog.Close();
+    }
+}

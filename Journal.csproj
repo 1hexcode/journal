@@ -65,4 +65,8 @@
         <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\images\" />
+    </ItemGroup>
+
 </Project>

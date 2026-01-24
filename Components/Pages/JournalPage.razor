@@ -1,6 +1,8 @@
-@attribute [Route(Journal.Route)]
+@attribute [Route(JournalPage.Route)]
 
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-8">
 
@@ -68,21 +70,43 @@
                 <div id="editor" class="journal-editor"></div>
 
                 <!-- Actions -->
-                <MudStack Row Justify="Justify.SpaceBetween" Class="mt-5">
-                    <MudButton Color="Color.Primary"
-                               Variant="Variant.Filled"
-                               OnClick="Save">
-                        💾 Save Entry
-                    </MudButton>
+                <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" Class="mt-5">
+
+                    <MudStack Row Spacing="2">
+                        <MudButton Color="Color.Primary"
+                                   Variant="Variant.Filled"
+                                   OnClick="SaveWithConfirmation">
+                            💾 Save Entry
+                        </MudButton>
+
+                        <MudButton Color="Color.Secondary"
+                                   Variant="Variant.Outlined"
+                                   OnClick="Clear">
+                            🧹 Clear
+                        </MudButton>
+                    </MudStack>
 
                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                         Stored locally (in-memory)
                     </MudText>
+
                 </MudStack>
 
+
+            </MudPaper>
+            <!-- All Entries HTML BELOW the journal card -->
+            <MudPaper Elevation="2" Class="pa-4 mt-4 all-entries-paper">
+                <MudText Typo="Typo.h6" GutterBottom>
+                    📄 All Entries (HTML)
+                </MudText>
+
+                <MudPaper Class="pa-3" Style="overflow:auto; max-height:300px;">
+                    <pre>@GetAllEntriesHtml()</pre>
+                </MudPaper>
             </MudPaper>
 
         </MudItem>
+
 
         <!-- RIGHT : RECENT ENTRIES -->
         <MudItem xs="12" md="4">
@@ -137,148 +161,3 @@
     </MudGrid>
 
 </MudContainer>
-
-@code {
-
-    
-}
-
-
-
-@*
-@page "/journal_rte"
-@inject IJSRuntime JS
-
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-8">
-
-    <MudPaper Elevation="6" Class="pa-6 journal-card">
-
-        <MudText Typo="Typo.h4" GutterBottom>
-            📝 Daily Journal
-        </MudText>
-
-        <MudDivider Class="mb-4" />
-
-        <!-- Date Selection -->
-        <MudDatePicker Label="Journal Date"
-                       Date="SelectedDate"
-                       DateChanged="OnDateChanged"
-                       PickerVariant="PickerVariant.Inline" />
-
-        <!-- Mood Selection -->
-        <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">
-            How are you feeling today?
-        </MudText>
-
-        <MudChipSet T="string"
-                    MultiSelection="true"
-                    SelectedValues="SelectedMoods"
-                    SelectedValuesChanged="OnMoodsChanged">
-            
-            @foreach (var mood in AvailableMoods)
-            {
-                <MudChip Value="@mood" Color="Color.Primary" Variant="Variant.Outlined">
-                    @mood
-                </MudChip>
-            }
-        </MudChipSet>
-
-        <!-- Add Custom Mood -->
-        <MudStack Row Class="mt-3">
-            <MudTextField @bind-Value="NewMood"
-                          Placeholder="Add a new feeling..."
-                          Variant="Variant.Outlined"
-                          Dense />
-            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="AddMood">
-                Add
-            </MudButton>
-        </MudStack>
-
-        <MudDivider Class="my-5" />
-
-        <!-- Rich Text Editor -->
-        <MudText Typo="Typo.subtitle1" Class="mb-2">
-            Write your thoughts
-        </MudText>
-
-        <div id="editor" class="journal-editor"></div>
-
-        <!-- Actions -->
-        <MudStack Row Justify="Justify.SpaceBetween" Class="mt-5">
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">
-                💾 Save Entry
-            </MudButton>
-
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                Auto-saved locally (future DB-ready)
-            </MudText>
-        </MudStack>
-
-    </MudPaper>
-
-</MudContainer>
-
-@code {
-    private DateTime SelectedDate = DateTime.Today;
-
-    private string HtmlContent = "";
-
-    private List<string> AvailableMoods = new()
-    {
-        "Happy", "Calm", "Anxious", "Sad", "Motivated", "Tired"
-    };
-
-    private IReadOnlyCollection<string> SelectedMoods = new List<string>();
-
-
-    private string NewMood = "";
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("initQuill", "editor");
-        }
-    }
-
-    private void OnMoodsChanged(IReadOnlyCollection<string> values)
-    {
-        SelectedMoods = values;
-    }
-
-    private async Task Save()
-    {
-        HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
-
-        // 🔜 Later:
-        // Save SelectedDate, HtmlContent, SelectedMoods
-        // into in-memory store / SQLite / secure storage
-    }
-    
-    private void OnDateChanged(DateTime? date)
-    {
-        if (date.HasValue)
-            SelectedDate = date.Value;
-    }
-    
-    private void AddMood()
-    {
-        if (string.IsNullOrWhiteSpace(NewMood))
-            return;
-
-        var mood = NewMood.Trim();
-
-        if (!AvailableMoods.Contains(mood))
-            AvailableMoods.Add(mood);
-
-        var updated = SelectedMoods.ToList();
-        updated.Add(mood);
-
-        SelectedMoods = updated;
-        NewMood = "";
-    }
-
-}
-
-
-*@
