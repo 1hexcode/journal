@@ -1,10 +1,13 @@
-/*namespace Journal.Data;
+using SQLite;
+
+namespace Journal.Data;
 
 public class DatabaseService
 {
+    
     public SQLiteAsyncConnection Connection { get; private set; }
 
-    public AppDatabase()
+    public void AppDatabase()
     {
         string databasePath = Path.Combine(
             FileSystem.AppDataDirectory,
@@ -18,4 +21,3 @@ public class DatabaseService
         // create other tables in a similar way.
     }
 }
-*/
