@@ -1,0 +1,12 @@
+.journal-editor {
+    background-color: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    min-height: 300px;
+    color: var(--mud-palette-text-primary);
+}
+
+/* Quill editor specific fixes for dark mode */
+.ql-toolbar{
+    background-color: #ffffff !important;
+}
