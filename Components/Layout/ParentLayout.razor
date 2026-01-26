@@ -1,9 +1,9 @@
 @inherits LayoutComponentBase
 
 <MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@IsDarkMode" />
-<MudDialogProvider MaxWidth="MaxWidth.ExtraSmall" Position="DialogPosition.Center" CloseOnEscapeKey="true" /> 
-    <MudSnackbarProvider />
-        <MudLayout>
+<MudDialogProvider MaxWidth="MaxWidth.ExtraSmall" Position="DialogPosition.Center" CloseOnEscapeKey="true" />
+<MudSnackbarProvider />
+<MudLayout>
     <CascadingValue Value="this">
         @Body
     </CascadingValue>
