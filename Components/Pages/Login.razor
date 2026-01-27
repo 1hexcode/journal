@@ -1,10 +1,13 @@
 @attribute [Route(Login.Route)]
 
 @using System.ComponentModel.DataAnnotations
-@using System.Diagnostics
+@using Journal.Services
 @layout EmptyLayout
 
 @inject NavigationManager NavigationManager
+@inject AuthService AuthService
+@inject ISnackbar Snackbar
+
 
 <MudContainer MaxWidth="MaxWidth.False"
               Class="d-flex align-center justify-center"
@@ -22,7 +25,7 @@
             <DataAnnotationsValidator/>
             <ValidationSummary></ValidationSummary>
 
-            <MudTextField @bind-Value="model.Email"
+            <MudTextField @bind-Value="email"
                           Label="Email"
                           Variant="Variant.Outlined"
                           InputType="InputType.Email"
@@ -31,7 +34,7 @@
                           Margin="Margin.Dense"
                           Class="mb-4"/>
 
-            <MudTextField @bind-Value="model.Password"
+            <MudTextField @bind-Value="password"
                           Label="Password"
                           Variant="Variant.Outlined"
                           InputType="@PasswordInput"
@@ -84,7 +87,9 @@
     private LoginModel model = new();
     private bool isPasswordVisible;
     private string errorMessage = string.Empty;
-
+    private string email = "";
+    private string password = "";
+    
     private InputType PasswordInput => isPasswordVisible ? InputType.Text : InputType.Password;
     private string PasswordInputIcon => isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
     
@@ -112,30 +117,30 @@
 
     private async Task HandleLogin()
     {
+        Console.WriteLine($"Attempting login with: {email} / {password}");
+
         message = "handle login";
-        try
+        bool success = await AuthService.Login(email, password);
+        
+        if (success)
         {
-            errorMessage = string.Empty;
-            // For demo purposes
-            // await Task.Delay(500);
-            Debug.WriteLine("Hellooo");
-            Preferences.Set("username", "john");
-            NavigationManager.NavigateTo("/home");
+            NavigationManager.NavigateTo("/journal");
         }
-        catch (Exception ex)
+        else
         {
-            errorMessage = "Invalid email or password. Please try again.";
+            // Show error message
+            Snackbar.Add($"{success} Invalid email or password", Severity.Error);
         }
     }
 
     public class LoginModel
     {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email address")]
+        // [Required(ErrorMessage = "Email is required")]
+        // [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        // [Required(ErrorMessage = "Password is required")]
+        //[MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; }

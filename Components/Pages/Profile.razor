@@ -1,0 +1,300 @@
+@attribute [Route(Profile.Route)]
+
+@using System.ComponentModel.DataAnnotations
+@using Journal.Models
+@using Journal.Services
+@inject AuthService AuthService
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    
+    @if (!AuthService.IsAuthenticated)
+    {
+        <MudAlert Severity="Severity.Warning">Please log in to view your profile.</MudAlert>
+        return;
+    }
+
+    <MudPaper Elevation="3" Class="pa-6">
+        
+        <MudText Typo="Typo.h4" GutterBottom Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-2" />
+            Profile Settings
+        </MudText>
+
+        <MudDivider Class="mb-6" />
+
+        <EditForm Model="@profileModel" OnValidSubmit="HandleUpdate">
+            <DataAnnotationsValidator />
+
+            <MudGrid>
+                
+                <!-- Personal Information Section -->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-3">Personal Information</MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="profileModel.FirstName"
+                                  For="@(() => profileModel.FirstName)"
+                                  Label="First Name"
+                                  Variant="Variant.Outlined"
+                                  ReadOnly="@(!isEditing)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="profileModel.LastName"
+                                  For="@(() => profileModel.LastName)"
+                                  Label="Last Name"
+                                  Variant="Variant.Outlined"
+                                  ReadOnly="@(!isEditing)" />
+                </MudItem>
+
+                <!-- Account Information Section -->
+                <MudItem xs="12" Class="mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Account Information</MudText>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="profileModel.Username"
+                                  For="@(() => profileModel.Username)"
+                                  Label="Username"
+                                  Variant="Variant.Outlined"
+                                  ReadOnly="true"
+                                  Disabled="true"
+                                  HelperText="Username cannot be changed" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="profileModel.Email"
+                                  For="@(() => profileModel.Email)"
+                                  Label="Email"
+                                  Variant="Variant.Outlined"
+                                  ReadOnly="@(!isEditing)" />
+                </MudItem>
+
+                <!-- Account Details -->
+                <MudItem xs="12" Class="mt-4">
+                    <MudPaper Elevation="0" Class="pa-3" Style="background-color: var(--mud-palette-background-grey);">
+                        <MudStack Row Spacing="4">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Member Since</MudText>
+                                <MudText Typo="Typo.body2">@AuthService.CurrentUser.CreatedAt.ToString("MMMM dd, yyyy")</MudText>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">User ID</MudText>
+                                <MudText Typo="Typo.body2">@AuthService.CurrentUser.Id.ToString().Substring(0, 8)...</MudText>
+                            </div>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Password Change Section (Optional) -->
+                @if (isEditing && showPasswordChange)
+                {
+                    <MudItem xs="12" Class="mt-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">Change Password</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="currentPassword"
+                                      Label="Current Password"
+                                      InputType="InputType.Password"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="newPassword"
+                                      Label="New Password"
+                                      InputType="InputType.Password"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="confirmPassword"
+                                      Label="Confirm New Password"
+                                      InputType="InputType.Password"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+                }
+
+                <!-- Action Buttons -->
+                <MudItem xs="12" Class="mt-6">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                        <MudStack Row Spacing="2">
+                            @if (!isEditing)
+                            {
+                                <MudButton StartIcon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Variant="Variant.Filled"
+                                           OnClick="EnableEdit">
+                                    Edit Profile
+                                </MudButton>
+                                
+                                <MudButton StartIcon="@Icons.Material.Filled.Lock"
+                                           Color="Color.Secondary"
+                                           Variant="Variant.Outlined"
+                                           OnClick="@(() => { isEditing = true; showPasswordChange = true; })">
+                                    Change Password
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           Color="Color.Success"
+                                           Variant="Variant.Filled"
+                                           Disabled="@isSaving">
+                                    @(isSaving ? "Saving..." : "Save Changes")
+                                </MudButton>
+                                
+                                <MudButton StartIcon="@Icons.Material.Filled.Cancel"
+                                           Color="Color.Default"
+                                           Variant="Variant.Outlined"
+                                           OnClick="CancelEdit"
+                                           Disabled="@isSaving">
+                                    Cancel
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudItem>
+
+            </MudGrid>
+        </EditForm>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    private UserProfileModel profileModel = new();
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private bool showPasswordChange = false;
+    
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
+
+    protected override void OnInitialized()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        LoadUserData();
+    }
+
+    private void LoadUserData()
+    {
+        var user = AuthService.CurrentUser;
+        profileModel = new UserProfileModel
+        {
+            Username = user.Username,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        };
+    }
+
+    private void EnableEdit()
+    {
+        isEditing = true;
+        showPasswordChange = false;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        showPasswordChange = false;
+        LoadUserData();
+        currentPassword = "";
+        newPassword = "";
+        confirmPassword = "";
+    }
+
+    private async Task HandleUpdate()
+    {
+        isSaving = true;
+
+        try
+        {
+            // Validate password change if attempted
+            if (showPasswordChange)
+            {
+                if (string.IsNullOrWhiteSpace(currentPassword))
+                {
+                    Snackbar.Add("Current password is required", Severity.Error);
+                    isSaving = false;
+                    return;
+                }
+
+                if (AuthService.CurrentUser.Password != currentPassword)
+                {
+                    Snackbar.Add("Current password is incorrect", Severity.Error);
+                    isSaving = false;
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+                {
+                    Snackbar.Add("New password must be at least 6 characters", Severity.Error);
+                    isSaving = false;
+                    return;
+                }
+
+                if (newPassword != confirmPassword)
+                {
+                    Snackbar.Add("Passwords do not match", Severity.Error);
+                    isSaving = false;
+                    return;
+                }
+
+                AuthService.CurrentUser.Password = newPassword;
+            }
+
+            // Update user details
+            AuthService.CurrentUser.FirstName = profileModel.FirstName;
+            AuthService.CurrentUser.LastName = profileModel.LastName;
+            AuthService.CurrentUser.Email = profileModel.Email;
+
+            await UserService.UpdateUser(AuthService.CurrentUser);
+
+            Snackbar.Add("Profile updated successfully!", Severity.Success);
+            
+            isEditing = false;
+            showPasswordChange = false;
+            currentPassword = "";
+            newPassword = "";
+            confirmPassword = "";
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public class UserProfileModel
+    {
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; }
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "First name is required")]
+        public string FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required")]
+        public string LastName { get; set; }
+    }
+}

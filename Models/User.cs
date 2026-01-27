@@ -1,9 +1,11 @@
 using System.Text.Json;
+using SQLite;
 
 namespace Journal.Models;
 
 public class User: IModel, ICloneable
 {
+    [PrimaryKey]
     public Guid Id {get; set;}
     public string Username {get; set;}
     public string Password {get; set;}
