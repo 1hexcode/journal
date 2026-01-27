@@ -1,0 +1,555 @@
+@page "/analytics"
+@using Journal.Services
+
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-8">
+
+    @if (!AuthService.IsAuthenticated)
+    {
+        <MudAlert Severity="Severity.Warning">Please log in to view statistics.</MudAlert>
+        return;
+    }
+
+    <!-- Header -->
+    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-6">
+        <div>
+            <MudText Typo="Typo.h3">📊 Writing Statistics</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Insights into your journaling journey
+            </MudText>
+        </div>
+        
+        <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
+            <MudButton OnClick="@(() => timeRange = "week")" 
+                      Variant="@(timeRange == "week" ? Variant.Filled : Variant.Outlined)">
+                Week
+            </MudButton>
+            <MudButton OnClick="@(() => timeRange = "month")" 
+                      Variant="@(timeRange == "month" ? Variant.Filled : Variant.Outlined)">
+                Month
+            </MudButton>
+            <MudButton OnClick="@(() => timeRange = "year")" 
+                      Variant="@(timeRange == "year" ? Variant.Filled : Variant.Outlined)">
+                Year
+            </MudButton>
+            <MudButton OnClick="@(() => timeRange = "all")" 
+                      Variant="@(timeRange == "all" ? Variant.Filled : Variant.Outlined)">
+                All Time
+            </MudButton>
+        </MudButtonGroup>
+    </MudStack>
+
+    <MudGrid Spacing="4">
+
+        <!-- Overview Cards -->
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="4" Class="pa-4 stat-card stat-card-primary">
+                <MudStack Spacing="2">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                        <MudIcon Icon="@Icons.Material.Filled.Article" Size="Size.Large" Color="Color.Primary" />
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">+12%</MudChip>
+                    </MudStack>
+                    <MudText Typo="Typo.h3">@totalEntries</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Total Entries</MudText>
+                    <MudText Typo="Typo.caption">@averagePerWeek entries per week</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="4" Class="pa-4 stat-card stat-card-warning">
+                <MudStack Spacing="2">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                        <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Large" Color="Color.Warning" />
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">🔥</MudChip>
+                    </MudStack>
+                    <MudText Typo="Typo.h3">@currentStreak</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Day Streak</MudText>
+                    <MudText Typo="Typo.caption">Longest: @longestStreak days</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="4" Class="pa-4 stat-card stat-card-success">
+                <MudStack Spacing="2">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                        <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" Color="Color.Success" />
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">Avg</MudChip>
+                    </MudStack>
+                    <MudText Typo="Typo.h3">@averageWordCount</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Avg Words</MudText>
+                    <MudText Typo="Typo.caption">Total: @totalWords words</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="4" Class="pa-4 stat-card stat-card-info">
+                <MudStack Spacing="2">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                        <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Size="Size.Large" Color="Color.Info" />
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary">@consistency%</MudChip>
+                    </MudStack>
+                    <MudText Typo="Typo.h3">@daysActive</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Active Days</MudText>
+                    <MudText Typo="Typo.caption">@consistency% consistency</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Writing Activity Chart -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">📈 Writing Activity</MudText>
+                
+                <div class="activity-chart">
+                    @foreach (var data in GetActivityData())
+                    {
+                        <div class="activity-bar-container">
+                            <div class="activity-bar" style="height: @(data.Count * 10)px">
+                                <MudTooltip Text="@($"{data.Label}: {data.Count} entries")">
+                                    <div class="activity-bar-fill"></div>
+                                </MudTooltip>
+                            </div>
+                            <MudText Typo="Typo.caption" Class="activity-label">@data.Label</MudText>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Mood Distribution -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">😊 Mood Distribution</MudText>
+                
+                <MudStack Spacing="3">
+                    @foreach (var mood in GetMoodData())
+                    {
+                        <div>
+                            <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" Class="mb-1">
+                                <MudText Typo="Typo.body2">@mood.Emoji @mood.Name</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@mood.Count (@mood.Percentage%)</MudText>
+                            </MudStack>
+                            <MudProgressLinear Value="@mood.Percentage" 
+                                             Color="@mood.Color" 
+                                             Size="Size.Large"
+                                             Class="rounded" />
+                        </div>
+                    }
+                </MudStack>
+
+                <MudDivider Class="my-4" />
+
+                <MudAlert Severity="Severity.Success" Dense>
+                    Your most common mood is <strong>@GetTopMood()</strong>! 
+                </MudAlert>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Word Cloud -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">☁️ Frequent Words</MudText>
+                
+                <div class="word-cloud">
+                    @foreach (var word in GetTopWords())
+                    {
+                        <MudChip T="string" Size="@word.Size" 
+                                Color="Color.Primary" 
+                                Variant="Variant.Outlined"
+                                Class="word-chip">
+                            @word.Text
+                        </MudChip>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Writing Times Heatmap -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">⏰ Writing Times</MudText>
+                
+                <div class="time-heatmap">
+                    @foreach (var hour in GetWritingTimeData())
+                    {
+                        <MudTooltip Text="@($"{hour.Time}: {hour.Count} entries")">
+                            <div class="time-block" style="opacity: @(hour.Count / 10.0)">
+                                <MudText Typo="Typo.caption">@hour.Time</MudText>
+                            </div>
+                        </MudTooltip>
+                    }
+                </div>
+
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-3">
+                    You write most often at <strong>@GetPeakWritingTime()</strong>
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Longest Entry -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">📝 Longest Entry</MudText>
+                
+                <MudStack Spacing="2">
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Date</MudText>
+                        <MudText Typo="Typo.body2">@longestEntryDate.ToString("MMM dd, yyyy")</MudText>
+                    </MudStack>
+                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Word Count</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">@longestEntryWords words</MudChip>
+                    </MudStack>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.body2" Class="entry-excerpt">
+                        "@longestEntryExcerpt"
+                    </MudText>
+                    <MudButton Color="Color.Primary" 
+                              Variant="Variant.Text" 
+                              Size="Size.Small"
+                              StartIcon="@Icons.Material.Filled.OpenInNew">
+                        View Full Entry
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Writing Habits -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">🎯 Writing Habits</MudText>
+                
+                <MudList T="string" Dense>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.CalendarToday" IconColor="Color.Primary">
+                        <MudText Typo="Typo.body2">
+                            <strong>Best Day:</strong> @GetBestDay()
+                        </MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Schedule" IconColor="Color.Success">
+                        <MudText Typo="Typo.body2">
+                            <strong>Average Time:</strong> @GetAverageWritingDuration()
+                        </MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.TrendingUp" IconColor="Color.Warning">
+                        <MudText Typo="Typo.body2">
+                            <strong>Productivity Trend:</strong> Increasing 📈
+                        </MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.EmojiEvents" IconColor="Color.Tertiary">
+                        <MudText Typo="Typo.body2">
+                            <strong>Milestone:</strong> 100 entries achieved!
+                        </MudText>
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Goals Progress -->
+        <MudItem xs="12">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">🎯 Goals Progress</MudText>
+                
+                <MudGrid Spacing="3">
+                    @foreach (var goal in GetGoals())
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudPaper Elevation="0" Class="pa-3" Style="border-left: 4px solid var(--mud-palette-primary);">
+                                <MudStack Spacing="2">
+                                    <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">@goal.Title</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @goal.Current / @goal.Target
+                                        </MudText>
+                                    </MudStack>
+                                    <MudProgressLinear Value="@goal.Progress" 
+                                                     Color="@goal.Color"
+                                                     Size="Size.Medium" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @goal.Remaining left to achieve goal
+                                    </MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Export Section -->
+        <MudItem xs="12">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.h6">📥 Export Your Data</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Download your statistics and journal entries
+                        </MudText>
+                    </div>
+                    <MudStack Row Spacing="2">
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Primary"
+                                  StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                  OnClick="@(() => Snackbar.Add("Exporting to PDF...", Severity.Info))">
+                            Export as PDF
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Success"
+                                  StartIcon="@Icons.Material.Filled.TableChart"
+                                  OnClick="@(() => Snackbar.Add("Exporting to CSV...", Severity.Info))">
+                            Export as CSV
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+</MudContainer>
+
+<style>
+    .stat-card {
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .stat-card-primary { background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(33, 150, 243, 0.02) 100%); }
+    .stat-card-warning { background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(255, 152, 0, 0.02) 100%); }
+    .stat-card-success { background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%); }
+    .stat-card-info { background: linear-gradient(135deg, rgba(3, 169, 244, 0.05) 0%, rgba(3, 169, 244, 0.02) 100%); }
+
+    .activity-chart {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 8px;
+        height: 200px;
+        padding: 1rem 0;
+    }
+
+    .activity-bar-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .activity-bar {
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        min-height: 20px;
+        transition: all 0.3s;
+    }
+
+    .activity-bar-fill {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(180deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%);
+        border-radius: 4px 4px 0 0;
+        transition: all 0.3s;
+    }
+
+    .activity-bar:hover .activity-bar-fill {
+        background: var(--mud-palette-primary-darken);
+        transform: scaleY(1.05);
+    }
+
+    .activity-label {
+        text-align: center;
+        font-size: 0.7rem;
+    }
+
+    .word-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        padding: 2rem 1rem;
+        min-height: 200px;
+        align-items: center;
+    }
+
+    .word-chip {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .word-chip:nth-child(2n) { animation-delay: 0.5s; }
+    .word-chip:nth-child(3n) { animation-delay: 1s; }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .time-heatmap {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 8px;
+        padding: 1rem 0;
+    }
+
+    .time-block {
+        aspect-ratio: 1;
+        background: var(--mud-palette-primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .time-block:hover {
+        transform: scale(1.1);
+        opacity: 1 !important;
+    }
+
+    .entry-excerpt {
+        font-style: italic;
+        color: var(--mud-palette-text-secondary);
+        padding: 1rem;
+        background: var(--mud-palette-background-grey);
+        border-radius: 4px;
+        border-left: 4px solid var(--mud-palette-primary);
+    }
+
+    @@media (max-width: 960px) {
+        .activity-chart {
+            height: 150px;
+        }
+
+        .activity-label {
+            font-size: 0.6rem;
+        }
+    }
+</style>
+
+@code {
+    private string timeRange = "month";
+    
+    // Overview Stats
+    private int totalEntries = 156;
+    private int currentStreak = 7;
+    private int longestStreak = 23;
+    private int averageWordCount = 342;
+    private int totalWords = 53352;
+    private int daysActive = 142;
+    private int consistency = 87;
+    private double averagePerWeek = 4.2;
+    
+    // Longest Entry
+    private DateTime longestEntryDate = DateTime.Today.AddDays(-15);
+    private int longestEntryWords = 1247;
+    private string longestEntryExcerpt = "Today was truly transformative. I've been reflecting on the patterns in my life and how they've shaped who I am...";
+
+    protected override void OnInitialized()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+    }
+
+    private List<ActivityData> GetActivityData()
+    {
+        // TODO: Replace with actual data
+        return timeRange switch
+        {
+            "week" => new List<ActivityData>
+            {
+                new("Mon", 2), new("Tue", 1), new("Wed", 3), new("Thu", 2),
+                new("Fri", 1), new("Sat", 0), new("Sun", 2)
+            },
+            "month" => new List<ActivityData>
+            {
+                new("W1", 8), new("W2", 6), new("W3", 10), new("W4", 7)
+            },
+            "year" => new List<ActivityData>
+            {
+                new("Jan", 12), new("Feb", 15), new("Mar", 18), new("Apr", 14),
+                new("May", 16), new("Jun", 13), new("Jul", 11), new("Aug", 15),
+                new("Sep", 17), new("Oct", 14), new("Nov", 6), new("Dec", 5)
+            },
+            _ => new List<ActivityData>()
+        };
+    }
+
+    private List<MoodData> GetMoodData()
+    {
+        return new List<MoodData>
+        {
+            new("😊", "Happy", 45, 35, Color.Success),
+            new("😌", "Peaceful", 38, 30, Color.Info),
+            new("🤗", "Grateful", 28, 22, Color.Primary),
+            new("😔", "Sad", 10, 8, Color.Warning),
+            new("😤", "Frustrated", 6, 5, Color.Error)
+        };
+    }
+
+    private List<WordData> GetTopWords()
+    {
+        return new List<WordData>
+        {
+            new("grateful", Size.Large),
+            new("happy", Size.Medium),
+            new("reflection", Size.Large),
+            new("growth", Size.Medium),
+            new("challenge", Size.Small),
+            new("peaceful", Size.Medium),
+            new("journey", Size.Large),
+            new("mindfulness", Size.Small),
+            new("progress", Size.Medium),
+            new("learning", Size.Small)
+        };
+    }
+
+    private List<TimeData> GetWritingTimeData()
+    {
+        return new List<TimeData>
+        {
+            new("6AM", 2), new("9AM", 5), new("12PM", 3), new("3PM", 1),
+            new("6PM", 4), new("9PM", 8), new("12AM", 1)
+        };
+    }
+
+    private List<Goal> GetGoals()
+    {
+        return new List<Goal>
+        {
+            new("Write 30 days straight", 7, 30, Color.Warning),
+            new("Reach 200 entries", 156, 200, Color.Primary),
+            new("Write 100k words", 53352, 100000, Color.Success)
+        };
+    }
+
+    private string GetTopMood() => "😊 Happy";
+    private string GetPeakWritingTime() => "9 PM";
+    private string GetBestDay() => "Monday (28 entries)";
+    private string GetAverageWritingDuration() => "15 minutes";
+
+    record ActivityData(string Label, int Count);
+    record MoodData(string Emoji, string Name, int Count, int Percentage, Color Color);
+    record WordData(string Text, Size Size);
+    record TimeData(string Time, int Count);
+    
+    record Goal(string Title, int Current, int Target, Color Color)
+    {
+        public double Progress => (Current * 100.0) / Target;
+        public string Remaining => $"{Target - Current} {(Title.Contains("days") ? "days" : Title.Contains("entries") ? "entries" : "words")}";
+    }
+}
