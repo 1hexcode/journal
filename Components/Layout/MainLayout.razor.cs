@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components;
+
 namespace Journal.Components.Layout;
 
 public partial class MainLayout
@@ -6,6 +8,12 @@ public partial class MainLayout
 
     private bool _drawerOpen = true;
 
+    [CascadingParameter]
+    public ParentLayout ParentLayout { get; set; } = default!;
+
+    // Access IsDarkMode from ParentLayout
+    private bool IsDarkMode => ParentLayout?.IsDarkMode ?? false;
+    
     private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;

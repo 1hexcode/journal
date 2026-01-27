@@ -20,5 +20,9 @@ public class DatabaseService
 
          Connection.CreateTableAsync<User>().Wait();
          Connection.CreateTableAsync<Models.Journal>().Wait();
+         Connection.CreateTableAsync<Reminder>().Wait();
+         Connection.CreateTableAsync<Mood>().Wait();
+         Connection.CreateTableAsync<Streaks>().Wait();
+         Connection.CreateTableAsync<Tags>().Wait();
     }
 }
