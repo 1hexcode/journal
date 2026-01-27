@@ -1,0 +1,7 @@
+@inject NavigationManager NavigationManager
+
+
+<MudIconButton Icon="@(HasActiveStreak ? Icons.Material.Filled.LocalFireDepartment : Icons.Material.Outlined.LocalFireDepartment)" 
+               Color="@(HasActiveStreak ? Color.Warning : Color.Default)" 
+               OnClick="@(() => NavigationManager.NavigateTo("/streaks"))"
+               Title="@(HasActiveStreak ? $"{CurrentStreak} day streak!" : "Streaks")" />

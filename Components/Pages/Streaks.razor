@@ -1,0 +1,384 @@
+@using Journal.Services
+@attribute [Route(Streaks.Route)]
+
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+
+    @if (!AuthService.IsAuthenticated)
+    {
+        <MudAlert Severity="Severity.Warning">Please log in to view your streaks.</MudAlert>
+        return;
+    }
+
+    <!-- Header -->
+    <MudText Typo="Typo.h3" GutterBottom Class="mb-6">
+        🔥 Writing Streaks
+    </MudText>
+
+    <MudGrid Spacing="4">
+
+        <!-- Current Streak Card -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="4" Class="pa-6 text-center streak-card-primary">
+                <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" 
+                         Size="Size.Large" 
+                         Color="Color.Warning" 
+                         Class="mb-3" />
+                <MudText Typo="Typo.h2" Color="Color.Warning">
+                    @currentStreak
+                </MudText>
+                <MudText Typo="Typo.h6" Color="Color.Secondary">
+                    Current Streak
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    @(currentStreak == 1 ? "day" : "days") in a row
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Longest Streak Card -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="4" Class="pa-6 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" 
+                         Size="Size.Large" 
+                         Color="Color.Success" 
+                         Class="mb-3" />
+                <MudText Typo="Typo.h2" Color="Color.Success">
+                    @longestStreak
+                </MudText>
+                <MudText Typo="Typo.h6" Color="Color.Secondary">
+                    Longest Streak
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Personal best
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Total Entries Card -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="4" Class="pa-6 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Article" 
+                         Size="Size.Large" 
+                         Color="Color.Info" 
+                         Class="mb-3" />
+                <MudText Typo="Typo.h2" Color="Color.Info">
+                    @totalEntries
+                </MudText>
+                <MudText Typo="Typo.h6" Color="Color.Secondary">
+                    Total Entries
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    All time
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Writing Activity Calendar -->
+        <MudItem xs="12">
+            <MudPaper Elevation="3" Class="pa-6">
+                <MudText Typo="Typo.h5" GutterBottom Class="mb-4">
+                    📅 Writing Activity
+                </MudText>
+                
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Last 90 days
+                </MudText>
+
+                <div class="activity-calendar">
+                    @for (int week = 0; week < 13; week++)
+                    {
+                        <div class="activity-week">
+                            @for (int day = 0; day < 7; day++)
+                            {
+                                var date = DateTime.Today.AddDays(-(90 - (week * 7 + day)));
+                                var hasEntry = writingDates.Contains(date.Date);
+                                var isFuture = date > DateTime.Today;
+                                
+                                <MudTooltip Text="@GetTooltipText(date, hasEntry)">
+                                    <div class="@GetActivityClass(hasEntry, isFuture)"></div>
+                                </MudTooltip>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <MudStack Row Spacing="2" Justify="Justify.Center" Class="mt-4">
+                    <MudText Typo="Typo.caption">Less</MudText>
+                    <div class="activity-day activity-none"></div>
+                    <div class="activity-day activity-low"></div>
+                    <div class="activity-day activity-medium"></div>
+                    <div class="activity-day activity-high"></div>
+                    <MudText Typo="Typo.caption">More</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Achievements -->
+        <MudItem xs="12">
+            <MudPaper Elevation="3" Class="pa-6">
+                <MudText Typo="Typo.h5" GutterBottom Class="mb-4">
+                    🏆 Achievements
+                </MudText>
+
+                <MudGrid Spacing="3">
+                    @foreach (var achievement in achievements)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudPaper Elevation="0" 
+                                      Class="@($"pa-4 achievement-card {(achievement.IsUnlocked ? "achievement-unlocked" : "achievement-locked")}")">
+                                <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                                    <MudIcon Icon="@achievement.Icon" 
+                                             Size="Size.Large"
+                                             Color="@(achievement.IsUnlocked ? achievement.Color : Color.Default)" />
+                                    <div style="flex: 1;">
+                                        <MudText Typo="Typo.subtitle1">
+                                            @achievement.Title
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @achievement.Description
+                                        </MudText>
+                                        @if (!achievement.IsUnlocked)
+                                        {
+                                            <MudProgressLinear Value="@achievement.Progress" 
+                                                             Color="Color.Primary" 
+                                                             Size="Size.Small" 
+                                                             Class="mt-2" />
+                                        }
+                                    </div>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Motivation Section -->
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info" Class="mb-0">
+                @GetMotivationalMessage()
+            </MudAlert>
+        </MudItem>
+
+    </MudGrid>
+
+</MudContainer>
+
+<style>
+    .streak-card-primary {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 87, 34, 0.1) 100%);
+    }
+
+    .activity-calendar {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        padding: 8px 0;
+    }
+
+    .activity-week {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .activity-day {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        transition: all 0.2s;
+    }
+
+    .activity-day:hover {
+        transform: scale(1.2);
+        outline: 2px solid var(--mud-palette-primary);
+    }
+
+    .activity-none {
+        background-color: var(--mud-palette-background-grey);
+    }
+
+    .activity-low {
+        background-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .activity-medium {
+        background-color: rgba(76, 175, 80, 0.6);
+    }
+
+    .activity-high {
+        background-color: rgba(76, 175, 80, 1);
+    }
+
+    .activity-future {
+        background-color: transparent;
+        border: 1px dashed var(--mud-palette-divider);
+    }
+
+    .achievement-card {
+        border: 2px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .achievement-unlocked {
+        border-color: var(--mud-palette-success);
+        background-color: rgba(76, 175, 80, 0.05);
+    }
+
+    .achievement-locked {
+        opacity: 0.5;
+    }
+
+    .achievement-unlocked:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    private int currentStreak = 0;
+    private int longestStreak = 0;
+    private int totalEntries = 0;
+    private HashSet<DateTime> writingDates = new();
+    private List<Achievement> achievements = new();
+
+    protected override void OnInitialized()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        LoadStreakData();
+        LoadAchievements();
+    }
+
+    private void LoadStreakData()
+    {
+        // TODO: Replace with actual data from your JournalEntry service
+        // This is mock data for demonstration
+        
+        totalEntries = 42;
+        currentStreak = 7;
+        longestStreak = 15;
+
+        // Mock writing dates (last 90 days with some gaps)
+        var random = new Random(42); // Fixed seed for consistent demo
+        for (int i = 0; i < 90; i++)
+        {
+            var date = DateTime.Today.AddDays(-i);
+            if (random.Next(0, 3) != 0) // 66% chance of writing
+            {
+                writingDates.Add(date.Date);
+            }
+        }
+    }
+
+    private void LoadAchievements()
+    {
+        achievements = new List<Achievement>
+        {
+            new Achievement
+            {
+                Title = "First Steps",
+                Description = "Write your first entry",
+                Icon = Icons.Material.Filled.Create,
+                Color = Color.Primary,
+                IsUnlocked = totalEntries >= 1,
+                Progress = Math.Min(100, totalEntries * 100)
+            },
+            new Achievement
+            {
+                Title = "Week Warrior",
+                Description = "Maintain a 7-day streak",
+                Icon = Icons.Material.Filled.LocalFireDepartment,
+                Color = Color.Warning,
+                IsUnlocked = longestStreak >= 7,
+                Progress = Math.Min(100, (currentStreak * 100.0 / 7.0))
+            },
+            new Achievement
+            {
+                Title = "Month Master",
+                Description = "Maintain a 30-day streak",
+                Icon = Icons.Material.Filled.Stars,
+                Color = Color.Success,
+                IsUnlocked = longestStreak >= 30,
+                Progress = Math.Min(100, (longestStreak * 100.0 / 30.0))
+            },
+            new Achievement
+            {
+                Title = "Century Club",
+                Description = "Write 100 entries",
+                Icon = Icons.Material.Filled.EmojiEvents,
+                Color = Color.Tertiary,
+                IsUnlocked = totalEntries >= 100,
+                Progress = Math.Min(100, (totalEntries * 100.0 / 100.0))
+            },
+            new Achievement
+            {
+                Title = "Dedicated Writer",
+                Description = "Write for 365 days",
+                Icon = Icons.Material.Filled.AutoStories,
+                Color = Color.Error,
+                IsUnlocked = totalEntries >= 365,
+                Progress = Math.Min(100, (totalEntries * 100.0 / 365.0))
+            },
+            new Achievement
+            {
+                Title = "Consistency King",
+                Description = "Maintain a 100-day streak",
+                Icon = Icons.Material.Filled.WorkspacePremium,
+                Color = Color.Warning,
+                IsUnlocked = longestStreak >= 100,
+                Progress = Math.Min(100, (longestStreak * 100.0 / 100.0))
+            }
+        };
+    }
+
+    private string GetActivityClass(bool hasEntry, bool isFuture)
+    {
+        if (isFuture) return "activity-day activity-future";
+        if (!hasEntry) return "activity-day activity-none";
+        
+        // You can add logic here for different intensity levels based on entry count
+        return "activity-day activity-high";
+    }
+
+    private string GetTooltipText(DateTime date, bool hasEntry)
+    {
+        if (date > DateTime.Today) return "";
+        return $"{date:MMM dd, yyyy}\n{(hasEntry ? "✓ Entry written" : "No entry")}";
+    }
+
+    private string GetMotivationalMessage()
+    {
+        if (currentStreak == 0)
+            return "🌱 Start your writing journey today! Every great streak begins with a single entry.";
+        
+        if (currentStreak < 7)
+            return $"💪 You're on a {currentStreak}-day streak! Keep going to reach your first week!";
+        
+        if (currentStreak < 30)
+            return $"🔥 Amazing! {currentStreak} days strong! You're building a powerful habit!";
+        
+        if (currentStreak < 100)
+            return $"⭐ Incredible dedication! {currentStreak} days and counting. You're an inspiration!";
+        
+        return $"👑 Legendary! {currentStreak} days! You've mastered the art of consistency!";
+    }
+
+    public class Achievement
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Icon { get; set; }
+        public Color Color { get; set; }
+        public bool IsUnlocked { get; set; }
+        public double Progress { get; set; }
+    }
+}
