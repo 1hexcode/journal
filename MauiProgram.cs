@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Journal.Services;
+using Microsoft.Extensions.Logging;
 using MudBlazor;
 using MudBlazor.Services;
 
@@ -26,6 +27,8 @@ public static class MauiProgram
         });
         
         builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddSingleton<UserService>();
+
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
