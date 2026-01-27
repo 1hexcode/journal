@@ -3,7 +3,7 @@ using SQLite;
 
 namespace Journal.Repository;
 
-internal class  MoodRepository : IRepository<Mood>
+public class MoodRepository : IRepository<Mood>
 {
     private readonly SQLiteAsyncConnection _db;
     private bool _isInitialized;
@@ -23,11 +23,21 @@ internal class  MoodRepository : IRepository<Mood>
         _isInitialized = true;
     }
 
-    private async Task SeedMoodsAsync()
+    /// <summary>
+    /// Public method to initialize the repository and seed moods data.
+    /// This can be called explicitly at application startup to ensure data is seeded.
+    /// </summary>
+    public async Task InitializeAndSeedAsync()
     {
+        await InitializeAsync();
+    }
+
+    public async Task SeedMoodsAsync()
+    {
+        
         var count = await _db.Table<Mood>().CountAsync();
         if (count > 0) return;
-
+        Console.WriteLine($"Mood Seeder Initialized");
         var moods = new List<Mood>();
 
         // Adding your required data
@@ -79,5 +89,13 @@ internal class  MoodRepository : IRepository<Mood>
     {
         await InitializeAsync();
         return await _db.DeleteAsync(entity);
+    }
+    
+    public async Task<List<Mood>> GetByCategoryAsync(string category)
+    {
+        await InitializeAsync();
+        return await _db.Table<Mood>()
+            .Where(m => m.MoodCategory == category)
+            .ToListAsync();
     }
 }

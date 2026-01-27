@@ -1,76 +1,12 @@
 using System.Text.Json;
+using SQLite;
 
 namespace Journal.Models;
 
-// Enums
-public enum MoodCategory
-{
-    Positive,
-    Neutral,
-    Negative
-}
-
-public enum PredefinedMood
-{
-    // Positive
-    Happy,
-    Excited,
-    Relaxed,
-    Grateful,
-    Confident,
-    
-    // Neutral
-    Calm,
-    Thoughtful,
-    Curious,
-    Nostalgic,
-    Bored,
-    
-    // Negative
-    Sad,
-    Angry,
-    Stressed,
-    Lonely,
-    Anxious
-}
-
-public enum PredefinedTag
-{
-    Work,
-    Career,
-    Studies,
-    Family,
-    Friends,
-    Relationships,
-    Health,
-    Fitness,
-    PersonalGrowth,
-    SelfCare,
-    Hobbies,
-    Travel,
-    Nature,
-    Finance,
-    Spirituality,
-    Birthday,
-    Holiday,
-    Vacation,
-    Celebration,
-    Exercise,
-    Reading,
-    Writing,
-    Cooking,
-    Meditation,
-    Yoga,
-    Music,
-    Shopping,
-    Parenting,
-    Projects,
-    Planning,
-    Reflection
-}
 
 public class Journal: IModel, ICloneable
 {
+    [PrimaryKey]
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public DateTime Date { get; set; } // Only date part (one entry per day)
@@ -78,18 +14,18 @@ public class Journal: IModel, ICloneable
     public DateTime UpdatedAt { get; set; }
     
     // Moods
-    public PredefinedMood PrimaryMood { get; set; } // Required
-    public List<PredefinedMood>? SecondaryMoods { get; set; } // Max 2
+    public string PrimaryMood { get; set; } // Required
+    public string SecondaryMoods { get; set; } // Max 2
     
     // Category
-    public MoodCategory Category { get; set; }
+    public string Category { get; set; }
     
     // Content
     public string? Notes { get; set; }
     
     // Tags
-    public List<PredefinedTag>? PredefinedTags { get; set; }
-    public List<string>? CustomTags { get; set; }
+    public string PredefinedTags { get; set; }
+    public string CustomTags { get; set; }
 
     public object Clone()
     {

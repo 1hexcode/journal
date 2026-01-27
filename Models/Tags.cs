@@ -8,8 +8,7 @@ public class Tags: IModel, ICloneable
     [PrimaryKey]
     public Guid Id {get; set;}
     
-    public string MoodId {get; set;}
-    public string TagId {get; set;}
+    public string TagName {get; set;}
     
     public DateTime CreatedAt {get; set;} =  DateTime.Now;
     public DateTime UpdatedAt {get; set;} =  DateTime.Now;
@@ -19,8 +18,7 @@ public class Tags: IModel, ICloneable
         return new Tags
         {
             Id = Id,
-            MoodId = MoodId,
-            TagId = TagId,
+            TagName = TagName,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
         };

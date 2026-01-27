@@ -1,16 +1,16 @@
+@using Journal.Repository
 @attribute [Route(JournalPage.Route)]
 
 @inject IJSRuntime JS
 @inject IDialogService DialogService
-
+@inject MoodRepository MoodRepository
+@inject JournalRepository JournalRepository
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-8">
-
     <MudGrid Spacing="4">
 
         <!-- LEFT : JOURNAL EDITOR -->
         <MudItem xs="12" md="8">
-
             <MudPaper Elevation="6" Class="pa-6 journal-card">
 
                 <MudText Typo="Typo.h4" GutterBottom>
@@ -26,73 +26,125 @@
                                PickerVariant="PickerVariant.Inline"
                                Class="mb-4" />
 
-                <!-- Mood Selection -->
+                <!-- Primary Mood Selection -->
                 <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">
                     How are you feeling today?
                 </MudText>
+                
 
+                <!-- Primary Categories -->
                 <MudChipSet T="string"
-                            MultiSelection="true"
-                            CheckMark="true"
-                            SelectedValues="SelectedMoods"
-                            SelectedValuesChanged="OnMoodsChanged">
-
-                    @foreach (var mood in AvailableMoods)
+                            MultiSelection="false"
+                            SelectedValue="SelectedPrimaryMood"
+                            SelectedValueChanged="OnPrimaryMoodChanged">
+                    @foreach (var category in MoodCategories)
                     {
-                        <MudChip Value="@mood"
-                                 Color="GetMoodColor(mood)"
-                                 Variant="Variant.Filled">
-                            @mood
+                        <MudChip Value="@category"
+                                 Color="GetCategoryColor(category)"
+                                 Variant="@(SelectedPrimaryMood == category ? Variant.Filled : Variant.Outlined)">
+                            @GetCategoryEmoji(category) @category
                         </MudChip>
                     }
                 </MudChipSet>
+                <!-- Divider between primary and secondary -->
+                @if (!string.IsNullOrEmpty(SelectedPrimaryMood) && SecondaryMoods.Any())
+                {
+                    <MudDivider Class="my-3" />
+                }
+                <!-- Secondary Moods (shown when primary is selected) -->
+                @if (!string.IsNullOrEmpty(SelectedPrimaryMood) && SecondaryMoods.Any())
+                {
+                    <MudPaper Elevation="0" Class="pa-3 mt-3 secondary-moods-panel" 
+                              Style="background-color: var(--mud-palette-background-grey);">
+                        
+                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.subtitle2">
+                                @GetCategoryEmoji(SelectedPrimaryMood) @SelectedPrimaryMood moods
+                            </MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                           Size="Size.Small"
+                                           OnClick="ClearPrimarySelection" />
+                        </MudStack>
+
+                        <MudChipSet T="string"
+                                    MultiSelection="true"
+                                    CheckMark="true"
+                                    SelectedValues="SelectedMoods"
+                                    SelectedValuesChanged="OnMoodsChanged"
+                                    Class="mt-2">
+                            @foreach (var mood in SecondaryMoods)
+                            {
+                                <MudChip Value="@mood"
+                                         Color="GetCategoryColor(SelectedPrimaryMood)"
+                                         Variant="Variant.Filled"
+                                         Size="Size.Small">
+                                    @mood
+                                </MudChip>
+                            }
+                        </MudChipSet>
+                    </MudPaper>
+                }
+
+                <!-- Selected Moods Summary -->
+                @if (SelectedMoods.Any())
+                {
+                    <MudStack Row Wrap="Wrap.Wrap" Spacing="1" Class="mt-3">
+                        <MudText Typo="Typo.caption" Class="align-self-center mr-2">
+                            Selected:
+                        </MudText>
+                        @foreach (var mood in SelectedMoods)
+                        {
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Primary"
+                                     OnClose="() => RemoveMood(mood)">
+                                @mood
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
 
                 <!-- Add Custom Mood -->
                 <MudStack Row Spacing="2" Class="mt-3">
                     <MudTextField @bind-Value="NewMood"
-                                  Placeholder="Add a new feeling..."
+                                  Placeholder="Add a custom mood..."
                                   Variant="Variant.Outlined"
                                   Dense />
                     <MudButton Color="Color.Primary"
                                Variant="Variant.Filled"
-                               OnClick="AddMood">
+                               OnClick="AddMood"
+                               Disabled="@string.IsNullOrWhiteSpace(NewMood)">
                         Add
                     </MudButton>
                 </MudStack>
 
                 <MudDivider Class="my-5" />
 
-                <!-- Rich Text Editor -->
+                <!-- Rest of your existing code... -->
                 <MudText Typo="Typo.subtitle1" Class="mb-2">
                     Write your thoughts
                 </MudText>
 
                 <div id="editor" class="journal-editor"></div>
 
-                <!-- Actions -->
                 <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" Class="mt-5">
-
                     <MudStack Row Spacing="2">
                         <MudButton Color="Color.Primary"
                                    Variant="Variant.Filled"
                                    OnClick="SaveWithConfirmation">
                             💾 Save Entry
                         </MudButton>
-
                         <MudButton Color="Color.Secondary"
                                    Variant="Variant.Outlined"
                                    OnClick="Clear">
                             🧹 Clear
                         </MudButton>
                     </MudStack>
-
                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                         Stored locally (in-memory)
                     </MudText>
-
                 </MudStack>
-
-
+    
             </MudPaper>
             <!-- All Entries HTML BELOW the journal card -->
             <MudPaper Elevation="2" Class="pa-4 mt-4 all-entries-paper">
@@ -104,60 +156,67 @@
                     <pre>@GetAllEntriesHtml()</pre>
                 </MudPaper>
             </MudPaper>
-
         </MudItem>
 
-
+        <!-- RIGHT : RECENT ENTRIES (unchanged) -->
         <!-- RIGHT : RECENT ENTRIES -->
-        <MudItem xs="12" md="4">
+<MudItem xs="12" md="4">
+    <MudPaper Elevation="4" Class="pa-4 recent-card">
 
-            <MudPaper Elevation="4" Class="pa-4 recent-card">
+        <MudText Typo="Typo.h6" GutterBottom>
+            📚 Recent Entries
+        </MudText>
 
-                <MudText Typo="Typo.h6" GutterBottom>
-                    📚 Recent Entries
-                </MudText>
+        <MudDivider Class="mb-3" />
 
-                <MudDivider Class="mb-3" />
-
-                @if (!RecentEntries.Any())
+        @if (!RecentEntries.Any())
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                No entries yet. Start writing 🌱
+            </MudText>
+        }
+        else
+        {
+            <MudList T="string" Dense="true">
+                @foreach (var entry in RecentEntries)
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        No entries yet. Start writing 🌱
-                    </MudText>
+                    <MudListItem T="string">
+                        <MudStack Spacing="1">
+
+                            <MudText Typo="Typo.subtitle2">
+                                @entry.Date.ToString("dd MMM yyyy")
+                            </MudText>
+
+                            <MudStack Row Wrap="Wrap.Wrap" Spacing="1">
+                                <!-- Primary Mood -->
+                                @if (!string.IsNullOrEmpty(entry.PrimaryMood))
+                                {
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="Color.Primary"
+                                             Variant="Variant.Filled">
+                                        @entry.PrimaryMood
+                                    </MudChip>
+                                }
+                                
+                                <!-- Secondary Moods -->
+                                @foreach (var mood in entry.SecondaryMoods?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [])
+                                {
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="Color.Secondary"
+                                             Variant="Variant.Outlined">
+                                        @mood.Trim()
+                                    </MudChip>
+                                }
+                            </MudStack>
+
+                        </MudStack>
+                    </MudListItem>
                 }
-                else
-                {
-                    <MudList T="string" Dense="true">
-                        @foreach (var entry in RecentEntries.OrderByDescending(e => e.Date))
-                        {
-                            <MudListItem T="string">
-                                <MudStack Spacing="1">
+            </MudList>
+        }
 
-                                    <MudText Typo="Typo.subtitle2">
-                                        @entry.Date.ToString("dd MMM yyyy")
-                                    </MudText>
-
-                                    <MudStack Row Wrap="Wrap.Wrap">
-                                        @foreach (var mood in entry.Moods)
-                                        {
-                                            <MudChip T="string" Size="Size.Small"
-                                                     Color="Color.Primary"
-                                                     Variant="Variant.Outlined">
-                                                @mood
-                                            </MudChip>
-                                        }
-                                    </MudStack>
-
-                                </MudStack>
-                            </MudListItem>
-                        }
-                    </MudList>
-                }
-
-            </MudPaper>
-
-        </MudItem>
+    </MudPaper>
+</MudItem>
 
     </MudGrid>
-
 </MudContainer>
