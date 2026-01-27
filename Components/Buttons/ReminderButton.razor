@@ -1,0 +1,7 @@
+@inject NavigationManager NavigationManager
+
+
+<MudIconButton Icon="@(RemindersEnabled ? Icons.Material.Filled.Notifications : Icons.Material.Filled.NotificationsOff)" 
+               Color="@(RemindersEnabled ? Color.Info : Color.Default)" 
+               OnClick="@(() => NavigationManager.NavigateTo("/reminders"))"
+               Title="@(RemindersEnabled ? "Reminders On" : "Reminders Off")" />
