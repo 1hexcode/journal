@@ -68,7 +68,7 @@
                               AdornmentIcon="@PasswordInputIcon"
                               OnAdornmentClick="TogglePasswordVisibility" />
 
-                @*<MudTextField @bind-Value="model.Password"
+                <MudTextField @bind-Value="model.ConfirmPassword"
                               Label="Confirm Password"
                               InputType="@ConfirmPasswordInput"
                               Variant="Variant.Outlined"
@@ -80,18 +80,15 @@
                               OnAdornmentClick="ToggleConfirmPasswordVisibility" />
 
                 <MudCheckBox @bind-Value="model.AcceptTerms"
-                             Required="true"
-                             RequiredError="You must accept the terms & conditions"
+                             For="@(() => model.AcceptTerms)"
                              Color="Color.Primary">
-                             *@
-                <MudCheckBox T="string">
                     I agree to the terms & conditions
                 </MudCheckBox>
 
-                <MudButton Type="Submit"
+                <MudButton ButtonType="ButtonType.Submit"
                            Variant="Variant.Filled"
                            Color="Color.Primary"
-                           FullWidth
+                           FullWidth="true"
                            Size="Size.Large"
                            Class="mt-4">
                     Create Account
@@ -128,7 +125,7 @@
 </MudContainer>
 
 @code {
-    private User model = new();
+    private SignupModel model = new();
 
     private bool isPasswordVisible;
     private bool isConfirmPasswordVisible;
@@ -166,7 +163,7 @@
 
     private async Task HandleSignup()
     {
-        Console.WriteLine("hello");
+        Console.WriteLine($"Signing up with model: {model.Username}, {model.Email}, {model.FirstName}, {model.LastName}, {model.Password}, {model.ConfirmPassword}, {model.AcceptTerms}");
         try
         {
             errorMessage = string.Empty;
@@ -201,26 +198,27 @@
         }
     }
 
-    @* public class SignupModel : IValidatableObject
+    public class SignupModel : IValidatableObject
     {
-        [Required, MinLength(2)]
+        [Required(ErrorMessage = "First name is required"), MinLength(2, ErrorMessage = "First name must be at least 2 characters")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required, MinLength(2)]
+        [Required(ErrorMessage = "Last name is required"), MinLength(2, ErrorMessage = "Last name must be at least 2 characters")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required, MinLength(3)]
+        [Required(ErrorMessage = "Username is required"), MinLength(3, ErrorMessage = "Username must be at least 3 characters")]
         public string Username { get; set; } = string.Empty;
 
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "Email is required"), EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; } = string.Empty;
 
-        [Required, MinLength(8)]
+        [Required(ErrorMessage = "Password is required"), MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
         public string Password { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Please confirm your password")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms & conditions")]
         public bool AcceptTerms { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext context)
@@ -233,5 +231,4 @@
             }
         }
     }
-    *@
 }
