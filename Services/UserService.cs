@@ -49,6 +49,15 @@ public class UserService
             .FirstOrDefaultAsync();
     }
 
+    // Get User by Useremail
+    public async Task<User> GetUserByUserEmail(string email)
+    {
+        return await _database.Table<User>()
+            .Where(u => u.Email == email)
+            .FirstOrDefaultAsync();
+    }
+
+    
     // Get All Users
     public async Task<List<User>> GetAllUsers()
     {

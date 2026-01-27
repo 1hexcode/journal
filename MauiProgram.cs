@@ -28,8 +28,7 @@ public static class MauiProgram
         
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton<UserService>();
-
-
+        builder.Services.AddSingleton<AuthService>();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
