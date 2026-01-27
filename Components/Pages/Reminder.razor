@@ -1,0 +1,347 @@
+@attribute [Route(Reminder.Route)]
+
+@using Journal.Services
+
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+
+    @if (!AuthService.IsAuthenticated)
+    {
+        <MudAlert Severity="Severity.Warning">Please log in to manage reminders.</MudAlert>
+        return;
+    }
+
+    <!-- Header -->
+    <MudText Typo="Typo.h3" GutterBottom Class="mb-2">
+        🔔 Writing Reminders
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+        Set up daily reminders to maintain your writing habit
+    </MudText>
+
+    <MudGrid Spacing="4">
+
+        <!-- Quick Settings Card -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="3" Class="pa-6">
+                <MudStack Spacing="4">
+                    
+                    <!-- Master Toggle -->
+                    <div>
+                        <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.h6">Enable Reminders</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Receive daily notifications to write
+                                </MudText>
+                            </div>
+                            <MudSwitch @bind-Value="remindersEnabled" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Large"
+                                       ThumbIcon="@(remindersEnabled ? Icons.Material.Filled.Check : null)" />
+                        </MudStack>
+                    </div>
+
+                    <MudDivider />
+
+                    @if (remindersEnabled)
+                    {
+                        <!-- Time Picker -->
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Reminder Time</MudText>
+                            <MudTimePicker @bind-Time="reminderTime"
+                                          Label="Choose time"
+                                          Variant="Variant.Outlined"
+                                          Editable="true"
+                                          AmPm="true" />
+                        </div>
+
+                        <!-- Frequency Selection -->
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Frequency</MudText>
+                            <MudRadioGroup @bind-Value="frequency">
+                                <MudRadio Value="@("daily")" Color="Color.Primary">
+                                    <MudText>Daily</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Every day</MudText>
+                                </MudRadio>
+                                <MudRadio Value="@("weekdays")" Color="Color.Primary">
+                                    <MudText>Weekdays</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Monday to Friday</MudText>
+                                </MudRadio>
+                                <MudRadio Value="@("custom")" Color="Color.Primary">
+                                    <MudText>Custom Days</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Choose specific days</MudText>
+                                </MudRadio>
+                            </MudRadioGroup>
+                        </div>
+
+                        <!-- Custom Days Selection -->
+                        @if (frequency == "custom")
+                        {
+                            <div>
+                                <MudText Typo="Typo.subtitle1" Class="mb-2">Select Days</MudText>
+                                <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                                    @foreach (var day in daysOfWeek)
+                                    {
+                                        <MudChip Value="@day"
+                                                Variant="@(selectedDays.Contains(day) ? Variant.Filled : Variant.Outlined)"
+                                                Color="@(selectedDays.Contains(day) ? Color.Primary : Color.Default)"
+                                                OnClick="@(() => ToggleDay(day))">
+                                            @day.Substring(0, 3)
+                                        </MudChip>
+                                    }
+                                </MudStack>
+                            </div>
+                        }
+
+                        <!-- Notification Style -->
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Notification Style</MudText>
+                            <MudSelect @bind-Value="notificationStyle" 
+                                      Variant="Variant.Outlined" 
+                                      AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@("gentle")">
+                                    Gentle reminder
+                                </MudSelectItem>
+                                <MudSelectItem Value="@("motivational")">
+                                    Motivational message
+                                </MudSelectItem>
+                                <MudSelectItem Value="@("prompt")">
+                                    Writing prompt
+                                </MudSelectItem>
+                            </MudSelect>
+                        </div>
+
+                        <!-- Save Button -->
+                        <MudButton Color="Color.Primary"
+                                  Variant="Variant.Filled"
+                                  FullWidth
+                                  StartIcon="@Icons.Material.Filled.Save"
+                                  OnClick="SaveReminders"
+                                  Disabled="@isSaving">
+                            @(isSaving ? "Saving..." : "Save Reminder Settings")
+                        </MudButton>
+                    }
+
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Preview & Info Card -->
+        <MudItem xs="12" md="6">
+            <MudStack Spacing="4">
+                
+                <!-- Preview Card -->
+                @if (remindersEnabled)
+                {
+                    <MudPaper Elevation="3" Class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-3">Preview</MudText>
+                        
+                        <MudPaper Elevation="0" Class="pa-4 notification-preview">
+                            <MudStack Row Spacing="2" AlignItems="AlignItems.Start">
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                <div style="flex: 1;">
+                                    <MudText Typo="Typo.subtitle1">Journal Reminder</MudText>
+                                    <MudText Typo="Typo.body2">@GetPreviewMessage()</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                                        @GetScheduleText()
+                                    </MudText>
+                                </div>
+                            </MudStack>
+                        </MudPaper>
+                    </MudPaper>
+
+                    <!-- Statistics Card -->
+                    <MudPaper Elevation="3" Class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-3">Reminder Stats</MudText>
+                        
+                        <MudStack Spacing="3">
+                            <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">Total reminders sent</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">45</MudChip>
+                            </MudStack>
+                            <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">Entries after reminder</MudText>
+                                <MudChip  T="string" Size="Size.Small" Color="Color.Success">38</MudChip>
+                            </MudStack>
+                            <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">Response rate</MudText>
+                                <MudChip  T="string" Size="Size.Small" Color="Color.Primary">84%</MudChip>
+                            </MudStack>
+                            
+                            <MudProgressLinear Value="84" Color="Color.Success" Size="Size.Large" Class="mt-2">
+                                <MudText Typo="Typo.body2">Great consistency! 🎉</MudText>
+                            </MudProgressLinear>
+                        </MudStack>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudPaper Elevation="3" Class="pa-6 text-center">
+                        <MudIcon Icon="@Icons.Material.Outlined.NotificationsOff" 
+                                Size="Size.Large" 
+                                Color="Color.Secondary" 
+                                Class="mb-3" />
+                        <MudText Typo="Typo.h6" Color="Color.Secondary">
+                            Reminders are disabled
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Enable reminders to stay consistent with your journaling habit
+                        </MudText>
+                    </MudPaper>
+                }
+
+                <!-- Tips Card -->
+                <MudPaper Elevation="3" Class="pa-6">
+                    <MudText Typo="Typo.h6" Class="mb-3">💡 Tips for Success</MudText>
+                    <MudList  T="string" Dense Clickable="false">
+                        <MudListItem  T="string" Icon="@Icons.Material.Filled.Schedule">
+                            <MudText Typo="Typo.body2">Choose a consistent time each day</MudText>
+                        </MudListItem>
+                        <MudListItem  T="string" Icon="@Icons.Material.Filled.LightMode">
+                            <MudText Typo="Typo.body2">Morning writing can set a positive tone</MudText>
+                        </MudListItem>
+                        <MudListItem  T="string" Icon="@Icons.Material.Filled.Bedtime">
+                            <MudText Typo="Typo.body2">Evening reflection helps process the day</MudText>
+                        </MudListItem>
+                        <MudListItem  T="string" Icon="@Icons.Material.Filled.Timer">
+                            <MudText Typo="Typo.body2">Even 5 minutes of writing counts</MudText>
+                        </MudListItem>
+                    </MudList>
+                </MudPaper>
+
+            </MudStack>
+        </MudItem>
+
+        <!-- Quick Actions -->
+        <MudItem xs="12">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudStack Row Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Need help setting up notifications?</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Make sure notifications are enabled in your device settings
+                        </MudText>
+                    </div>
+                    <MudButton Variant="Variant.Outlined" 
+                              Color="Color.Info"
+                              StartIcon="@Icons.Material.Filled.Settings"
+                              OnClick="@(() => Snackbar.Add("Opening system settings...", Severity.Info))">
+                        Device Settings
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+</MudContainer>
+
+<style>
+    .notification-preview {
+        background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+        border-left: 4px solid var(--mud-palette-primary);
+    }
+</style>
+
+@code {
+    private bool remindersEnabled = false;
+    private TimeSpan? reminderTime = new TimeSpan(20, 0, 0); // 8:00 PM default
+    private string frequency = "daily";
+    private string notificationStyle = "motivational";
+    private bool isSaving = false;
+    
+    private List<string> daysOfWeek = new() 
+    { 
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" 
+    };
+    
+    private HashSet<string> selectedDays = new() 
+    { 
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" 
+    };
+
+    protected override void OnInitialized()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        LoadReminderSettings();
+    }
+
+    private void LoadReminderSettings()
+    {
+        // TODO: Load from database/preferences
+        // For now using defaults
+    }
+
+    private void ToggleDay(string day)
+    {
+        if (selectedDays.Contains(day))
+            selectedDays.Remove(day);
+        else
+            selectedDays.Add(day);
+    }
+
+    private async Task SaveReminders()
+    {
+        isSaving = true;
+
+        try
+        {
+            // TODO: Save to database/preferences
+            // TODO: Schedule actual notifications using platform-specific code
+            
+            await Task.Delay(1000); // Simulate save
+
+            Snackbar.Add("Reminder settings saved successfully!", Severity.Success);
+            
+            if (remindersEnabled)
+            {
+                Snackbar.Add($"You'll receive reminders at {reminderTime?.ToString(@"hh\:mm tt")}", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetPreviewMessage()
+    {
+        return notificationStyle switch
+        {
+            "gentle" => "It's time to write in your journal 📝",
+            "motivational" => "Your future self will thank you for writing today! ✨",
+            "prompt" => "What made you smile today? Share your thoughts 😊",
+            _ => "Time to journal!"
+        };
+    }
+
+    private string GetScheduleText()
+    {
+        if (!remindersEnabled) return "Reminders disabled";
+
+        var time = reminderTime?.ToString(@"hh\:mm tt") ?? "Not set";
+        
+        return frequency switch
+        {
+            "daily" => $"Every day at {time}",
+            "weekdays" => $"Weekdays at {time}",
+            "custom" => selectedDays.Any() 
+                ? $"{string.Join(", ", selectedDays.Select(d => d.Substring(0, 3)))} at {time}"
+                : "No days selected",
+            _ => time
+        };
+    }
+}
