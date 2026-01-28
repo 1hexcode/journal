@@ -209,14 +209,24 @@ public partial class JournalPage
             UpdatedAt = DateTime.Now
         };
         
-        // Debug: Check entry before save
-        Console.WriteLine($"Saving entry - Notes: {entry.Notes}");
+        try
+        {
+            Console.WriteLine($"Saving entry - Notes: {entry.Notes}");
 
-        await JournalRepository.SaveAsync(entry);
-        await LoadRecentEntries();
-        await Clear();
-        
-        Snackbar.Add("Entry saved!", Severity.Success);
+            await JournalRepository.SaveAsync(entry);
+            await LoadRecentEntries();
+            await Clear();
+
+            Snackbar.Add("Entry saved!", Severity.Success);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving entry: {ex.Message}", Severity.Error);
+        }
     }
     
     private string GetAllEntriesHtml()

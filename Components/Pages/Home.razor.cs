@@ -11,7 +11,59 @@ public partial class Home
     public const string Route = "/home";
 
     private const string StreakDialogLastShownKey = "StreakDialogLastShown";
+    
+    private string dominantMood = "Happy";
+    private int thisMonthCount = 10;
+    private DateTime selectedDate = DateTime.Today;
 
+    private string writingPrompt = "What made you smile today?";
+
+    private readonly List<string> writingPrompts = new()
+    {
+        "What made you smile today?",
+        "Describe a moment you felt proud of yourself recently.",
+        "What are three things you're grateful for right now?",
+        "If you could relive one day from this week, which would it be and why?",
+        "What's something new you learned about yourself lately?",
+        "Write about a challenge you overcame and how it made you stronger.",
+        "What does your ideal day look like?",
+        "Who inspires you and why?",
+        "What's a goal you're working towards?",
+        "Describe a place where you feel most at peace.",
+        "What advice would you give to your younger self?",
+        "Write about something you're looking forward to.",
+        "What's a recent accomplishment, big or small?",
+        "How do you practice self-care?",
+        "What's one thing you'd like to change about your routine?"
+    };
+
+    private void LoadNewPrompt()
+    {
+        var random = new Random();
+        var newPrompt = writingPrompts[random.Next(writingPrompts.Count)];
+    
+        // Make sure we don't get the same prompt twice in a row
+        while (newPrompt == writingPrompt && writingPrompts.Count > 1)
+        {
+            newPrompt = writingPrompts[random.Next(writingPrompts.Count)];
+        }
+    
+        writingPrompt = newPrompt;
+    }
+    private string GetEntryPreview(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return "No content";
+    
+        // Strip HTML tags if content contains HTML
+        var plainText = System.Text.RegularExpressions.Regex.Replace(content, "<.*?>", string.Empty);
+    
+        // Return first 150 characters
+        return plainText.Length > 150 
+            ? plainText.Substring(0, 150) + "..." 
+            : plainText;
+    }
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -200,6 +252,7 @@ public partial class Home
         public string Content { get; set; } = string.Empty;
         public int WordCount { get; set; }
         public string Mood { get; set; } = string.Empty;
+        public List<string> Moods { get; set; } = new(); 
     }
 
     public class MoodOption

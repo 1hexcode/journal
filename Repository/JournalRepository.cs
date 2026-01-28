@@ -52,9 +52,7 @@ public class JournalRepository: IRepository<Models.Journal>
         var existing = await GetByDateAsync(entry.Date);
         if (existing != null)
         {
-            entry.Id = existing.Id;
-            entry.CreatedAt = existing.CreatedAt;
-            return await _db.UpdateAsync(entry);
+            throw new InvalidOperationException($"An entry already exists for {entry.Date:MMMM dd, yyyy}. Try selecting tomorrow or delete today's entry instead.");
         }
         
         return await _db.InsertAsync(entry);
