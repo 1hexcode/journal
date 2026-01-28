@@ -1,0 +1,184 @@
+@page "/journal/view/{Id:guid}"
+@using Journal.Repository
+
+@inject JournalRepository JournalRepository
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-12">
+
+    @if (isLoading)
+    {
+        <MudPaper Elevation="2" Class="pa-8 text-center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate />
+            <MudText Class="mt-4">Loading journal entry...</MudText>
+        </MudPaper>
+    }
+    else if (journal == null)
+    {
+        <MudPaper Elevation="2" Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
+            <MudText Typo="Typo.h6" Class="mt-4">Journal entry not found</MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Class="mt-4" Href="/search">
+                Back to Search
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <!-- Header with Navigation -->
+        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudButton Variant="Variant.Text"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="GoBack">
+                Back
+            </MudButton>
+            <MudStack Row Spacing="2">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           OnClick="EditJournal">
+                    Edit
+                </MudButton>
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="DeleteJournal">
+                    Delete
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        <MudPaper Elevation="4" Class="pa-6">
+
+            <!-- Date & Day Header -->
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="mb-4">
+                <div>
+                    <MudText Typo="Typo.h4">
+                        📖 @journal.Date.ToString("MMMM dd, yyyy")
+                    </MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">
+                        @journal.Date.ToString("dddd")
+                    </MudText>
+                </div>
+                <MudChip T="string" 
+                         Color="Color.Primary" 
+                         Variant="Variant.Filled"
+                         Size="Size.Large">
+                    @GetDaysAgo()
+                </MudChip>
+            </MudStack>
+
+            <MudDivider Class="my-4" />
+
+            <!-- Mood Section -->
+            <MudText Typo="Typo.h6" Class="mb-3">
+                🎭 Mood
+            </MudText>
+
+            <MudStack Row Spacing="2" Wrap="Wrap.Wrap" Class="mb-4">
+                @if (!string.IsNullOrEmpty(journal.PrimaryMood))
+                {
+                    <MudChip T="string"
+                             Color="@GetMoodColor(journal.PrimaryMood)"
+                             Variant="Variant.Filled"
+                             Size="Size.Medium">
+                        @journal.PrimaryMood
+                    </MudChip>
+                }
+
+                @foreach (var mood in GetSecondaryMoodsList())
+                {
+                    <MudChip T="string"
+                             Color="@GetMoodColor(mood)"
+                             Variant="Variant.Outlined"
+                             Size="Size.Medium">
+                        @mood
+                    </MudChip>
+                }
+            </MudStack>
+
+            <!-- Tags Section -->
+            @if (GetAllTags().Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    🏷️ Tags
+                </MudText>
+
+                <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mb-4">
+                    @foreach (var tag in GetAllTags())
+                    {
+                        <MudChip T="string"
+                                 Variant="Variant.Outlined"
+                                 Color="Color.Info"
+                                 Size="Size.Small">
+                            @tag
+                        </MudChip>
+                    }
+                </MudStack>
+            }
+
+            <MudDivider Class="my-4" />
+
+            <!-- Journal Content -->
+            <MudText Typo="Typo.h6" Class="mb-3">
+                📝 Entry
+            </MudText>
+
+            <MudPaper Variant="Variant.Outlined" Class="pa-4 journal-content">
+                @((MarkupString)(journal.Notes ?? "<p><em>No content</em></p>"))
+            </MudPaper>
+
+            <!-- Metadata Footer -->
+            <MudDivider Class="my-4" />
+
+            <MudStack Row Justify="Justify.SpaceBetween" Class="mt-4">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Created: @journal.CreatedAt.ToString("MMM dd, yyyy h:mm tt")
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Last updated: @journal.UpdatedAt.ToString("MMM dd, yyyy h:mm tt")
+                </MudText>
+            </MudStack>
+
+        </MudPaper>
+
+        <!-- Navigation Cards -->
+        <MudGrid Spacing="3" Class="mt-4">
+            <MudItem xs="6">
+                @if (previousJournal != null)
+                {
+                    <MudCard Elevation="2" Class="cursor-pointer" @onclick="() => NavigateToJournal(previousJournal.Id)">
+                        <MudCardContent>
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronLeft" />
+                                <div>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Previous Entry</MudText>
+                                    <MudText Typo="Typo.body2">@previousJournal.Date.ToString("MMM dd, yyyy")</MudText>
+                                </div>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+            <MudItem xs="6">
+                @if (nextJournal != null)
+                {
+                    <MudCard Elevation="2" Class="cursor-pointer" @onclick="() => NavigateToJournal(nextJournal.Id)">
+                        <MudCardContent>
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="2">
+                                <div class="text-right">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Next Entry</MudText>
+                                    <MudText Typo="Typo.body2">@nextJournal.Date.ToString("MMM dd, yyyy")</MudText>
+                                </div>
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    }
+
+</MudContainer>

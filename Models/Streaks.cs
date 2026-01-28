@@ -7,16 +7,18 @@ public class Streaks: IModel, ICloneable
 {
     [PrimaryKey]
     public Guid Id {get; set;}
-    
-    // The current number of consecutive days
     public int CurrentCount { get; set; }
-    
     public int LongestCount { get; set; }
     public int TotalEntries { get; set; }
     public DateTime LastEntryDate { get; set; }
-    
+    public int NextMilestone { get; set; }
+    public int PreviousMilestone { get; set; } 
+    public string NextMilestoneName { get; set; } = "";
+    public int DaysToNextMilestone { get; set; }
     public DateTime CreatedAt {get; set;} =  DateTime.Now;
     public DateTime UpdatedAt {get; set;} =  DateTime.Now;
+    public bool IsStreakActive { get; set; }
+
     
     public override string ToString()
     {
@@ -32,6 +34,11 @@ public class Streaks: IModel, ICloneable
             LongestCount = LongestCount,
             TotalEntries = TotalEntries,
             LastEntryDate = LastEntryDate,
+            NextMilestone = NextMilestone,
+            PreviousMilestone = PreviousMilestone,
+            NextMilestoneName = NextMilestoneName,
+            IsStreakActive = IsStreakActive,
+            DaysToNextMilestone = DaysToNextMilestone,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,
         };

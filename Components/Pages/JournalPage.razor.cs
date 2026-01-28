@@ -12,6 +12,7 @@ public partial class JournalPage
     public const string Route = "/journal";
     
     // State
+    private  string JournalTitle { get; set; }
     private DateTime? SelectedDate { get; set; } = DateTime.Today;
     private string? SelectedPrimaryMood { get; set; }
     private IReadOnlyCollection<string> SelectedMoods { get; set; } = [];
@@ -37,6 +38,7 @@ public partial class JournalPage
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadRecentEntries();
         await LoadMoodCategories();
     }
     
@@ -159,7 +161,7 @@ public partial class JournalPage
         };
 
         // Show dialog
-        var dialog = DialogService.Show<ApproveDialog>("Confirm Save", parameters, options);
+        var dialog = await DialogService.ShowAsync<ApproveDialog>("Confirm Save", parameters, options);
         var result = await dialog.Result;
         
         
@@ -170,35 +172,51 @@ public partial class JournalPage
     }
     private async Task LoadRecentEntries()
     {
+        // Store current state
+        var currentTitle = JournalTitle;
+        var currentPrimaryMood = SelectedPrimaryMood;
+        var currentMoods = new List<string>(SelectedMoods);
+        var currentNewMood = NewMood;
+    
+        // Reload entries
         RecentEntries = await JournalRepository.GetRecentAsync(10);
+    
+        // Restore state
+        JournalTitle = currentTitle;
+        SelectedPrimaryMood = currentPrimaryMood;
+        SelectedMoods = currentMoods;
+        NewMood = currentNewMood;
+    
         StateHasChanged();
     }
     
     private async Task Save()
     {
+        Console.WriteLine($"_editorInitialized = {_editorInitialized}");  // Add thi
         HtmlContent = await JS.InvokeAsync<string>("getQuillHtml");
-        
-        var html = await GetEditorHtml();
-        var plainText = await JS.InvokeAsync<string>("quillInterop.getText");
 
         // Ensure one entry per date
         var entry = new Models.Journal
         {
             Id = Guid.NewGuid(),
+            Title = JournalTitle,
             Date = SelectedDate ?? DateTime.Today,
             PrimaryMood = SelectedPrimaryMood ?? string.Empty,
-            SecondaryMoods = string.Join(",", SelectedMoods),  // "Happy,Excited"
+            SecondaryMoods = string.Join(",", SelectedMoods),
             Category = "General",
-            Notes = html,
+            Notes = HtmlContent,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
+        
+        // Debug: Check entry before save
+        Console.WriteLine($"Saving entry - Notes: {entry.Notes}");
 
         await JournalRepository.SaveAsync(entry);
         await LoadRecentEntries();
         await Clear();
-
-        // Console.WriteLine(allEntriesHtml); // or display in UI
+        
+        Snackbar.Add("Entry saved!", Severity.Success);
     }
     
     private string GetAllEntriesHtml()
@@ -245,60 +263,11 @@ public partial class JournalPage
     
     private async Task<string> GetEditorHtml()
     {
-        if (!_editorInitialized) return string.Empty;
+        if (!_editorInitialized) 
+        {
+            Console.WriteLine("Editor not initialized!");
+            return string.Empty;
+        }
         return await JS.InvokeAsync<string>("quillInterop.getHtml");
     }
-
-    /*
-    private IReadOnlyCollection<string> SelectedMoods = new List<string>();
-
-    private string NewMood = "";
-
-    
-    
-    private readonly Dictionary<string, Color> MoodColors = new()
-    {
-        ["Negative"] = Color.Warning,      // yellow
-        ["Positive"] = Color.Success,      // green
-        ["Neutral"] = Color.Primary,       // soft blue
-    };
-    
-    private Color GetMoodColor(string mood)
-    {
-        return MoodColors.TryGetValue(mood, out var color)
-            ? color
-            : Color.Dark; // fallback for custom moods
-    }
-
-
-    
-
-    
-
-    private void OnDateChanged(DateTime? date)
-    {
-        if (date.HasValue)
-            SelectedDate = date.Value;
-    }
-
-    private void OnMoodsChanged(IReadOnlyCollection<string> values)
-    {
-        SelectedMoods = values;
-    }
-
-    private void AddMood()
-    {
-        if (string.IsNullOrWhiteSpace(NewMood))
-            return;
-
-        var mood = NewMood.Trim();
-
-        if (!AvailableMoods.Contains(mood))
-            AvailableMoods.Add(mood);
-
-        var updated = SelectedMoods.ToList(); updated.Add(mood); 
-        SelectedMoods = updated;
-        NewMood = "";
-    }
-    */ 
 }

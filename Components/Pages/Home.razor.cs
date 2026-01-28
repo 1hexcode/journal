@@ -1,3 +1,5 @@
+using Journal.Repository;
+using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
 namespace Journal.Components.Pages;
@@ -8,68 +10,203 @@ public partial class Home
 {
     public const string Route = "/home";
 
-    // In-memory list of journal dates for streak calculation
-    private List<DateTime> UserEntries = new()
-    {
-        DateTime.Today.AddDays(-2),
-        DateTime.Today.AddDays(-1),
-        DateTime.Today // example streak: 3 days
-    };
+    private const string StreakDialogLastShownKey = "StreakDialogLastShown";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Ensure UI is rendered before opening dialog
-            await InvokeAsync(async () =>
-            {
-                await Task.Delay(150); // small delay
-                ShowStreakDialog();
-            });
+            Console.WriteLine($"StreakDialogLastShown");
+            await TryShowStreakDialog();
         }
     }
 
-    private void ShowStreakDialog()
+    private async Task TryShowStreakDialog()
     {
-        int streak = CalculateStreak();
+        // Check if already shown today
+        if (!await StreaksRepository.ShouldShowStreakDialogAsync()) return;
 
-        if (streak == 0) return;
+        var streakInfo = await StreaksRepository.CreateAsync();
+        int totalEntries = await StreaksRepository.GetTotalCountAsync();
 
-        var parameters = new DialogParameters
+        // Mark as shown today
+        MarkStreakDialogShown();
+
+        var parameters = new DialogParameters<StreakDialog>
         {
-            ["StreakDays"] = streak
+            { x => x.CurrentStreak, totalEntries },
+            { x => x.TotalEntries, totalEntries },
+            { x => x.LongestStreak, totalEntries },
+            { x => x.AchievementName, "Daily Streak!" },
+            { x => x.AchievementDescription, $"You're on a {totalEntries}-day streak!" },
         };
 
         var options = new DialogOptions
         {
             CloseButton = true,
             MaxWidth = MaxWidth.Small,
-            FullWidth = true
+            FullWidth = true,
+            NoHeader = true
         };
 
-        DialogService.Show<StreakDialog>("Your Streak!", parameters, options);
+        await DialogService.ShowAsync<StreakDialog>("Your Streak!", parameters, options);
     }
 
-    private int CalculateStreak()
+
+    private void MarkStreakDialogShown()
     {
-        if (!UserEntries.Any()) return 0;
+        Preferences.Set(StreakDialogLastShownKey, DateTime.Today.ToString("O"));
+    }
 
-        var ordered = UserEntries
-            .OrderByDescending(d => d.Date)
-            .Select(d => d.Date)
-            .ToList();
+    private int totalEntries = 24;
+    private int currentStreak = 7;
+    private int thisMonth = 15;
+    private int avgWords = 342;
+    private string selectedMood = string.Empty;
 
-        int streak = 0;
-        DateTime today = DateTime.Today;
+    private string dailyQuote = "The secret of getting ahead is getting started.";
+    private string quoteAuthor = "Mark Twain";
 
-        foreach (var date in ordered)
+    private List<JournalEntryPreview> recentEntries = new();
+
+    private List<MoodOption> moods = new()
+    {
+    new MoodOption { 
+        Label = "Great", 
+        Value = "great", 
+        Icon = Icons.Material.Filled.SentimentVerySatisfied, 
+        Color = MudBlazor.Color.Success },
+    new MoodOption
+    {
+        Label = "Good",
+        Value = "good", 
+        Icon = Icons.Material.Filled.SentimentSatisfied, 
+        Color = MudBlazor.Color.Info
+    },
+    new MoodOption
+    {
+        Label = "Okay", 
+        Value = "okay", 
+        Icon = Icons.Material.Filled.SentimentNeutral, 
+        Color = MudBlazor.Color.Warning
+    },
+    new MoodOption { 
+        Label = "Bad",
+        Value = "bad", 
+        Icon = Icons.Material.Filled.SentimentDissatisfied, 
+        Color = MudBlazor.Color.Error
+    },
+    new MoodOption {
+        Label = "Terrible", 
+        Value = "terrible",
+        Icon = Icons.Material.Filled.SentimentVeryDissatisfied, 
+        Color = MudBlazor.Color.Dark }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: Load actual data from database
+        LoadRecentEntries();
+    }
+
+    private void LoadRecentEntries()
+    {
+        // Sample data - replace with actual database calls
+        recentEntries = new List<JournalEntryPreview>
+{
+            new JournalEntryPreview
+            {
+                Title = "A Productive Day",
+                Date = DateTime.Today.AddDays(-1),
+                Content = "Today was incredibly productive. I managed to complete all my tasks and even had time for a walk in the park. The weather was perfect, and I felt a great sense of accomplishment.",
+                WordCount = 245,
+                Mood = "great"
+            },
+            new JournalEntryPreview
+            {
+                Title = "Reflection on the Week",
+                Date = DateTime.Today.AddDays(-2),
+                Content = "This week has been full of challenges but also growth. I learned a lot about myself and how I handle stress. Looking forward to a relaxing weekend.",
+                WordCount = 189,
+                Mood = "good"
+            },
+            new JournalEntryPreview
+            {
+                Title = "Morning Thoughts",
+                Date = DateTime.Today.AddDays(-3),
+                Content = "Woke up feeling refreshed and ready to tackle the day. Sometimes a good night's sleep makes all the difference.",
+                WordCount = 156,
+                Mood = "good"
+            }
+        };
+    }
+
+    private string GetGreeting()
+    {
+        var hour = DateTime.Now.Hour;
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    }
+
+    private string GetPreview(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return "No content";
+
+        return content.Length > 120 ? content.Substring(0, 120) + "..." : content;
+    }
+
+    private string GetMoodIcon(string mood)
+    {
+        return mood switch
         {
-            if (date == today.AddDays(-streak))
-                streak++;
-            else
-                break;
-        }
+            "great" => Icons.Material.Filled.SentimentVerySatisfied,
+            "good" => Icons.Material.Filled.SentimentSatisfied,
+            "okay" => Icons.Material.Filled.SentimentNeutral,
+            "bad" => Icons.Material.Filled.SentimentDissatisfied,
+            "terrible" => Icons.Material.Filled.SentimentVeryDissatisfied,
+            _ => Icons.Material.Filled.SentimentNeutral
+        };
+    }
 
-        return streak;
+    private MudBlazor.Color  GetMoodColor(string mood)
+    {
+        return mood switch
+        {
+            "great" => MudBlazor.Color.Success,
+            "good" => MudBlazor.Color.Info,
+            "okay" => MudBlazor.Color.Warning,
+            "bad" => MudBlazor.Color.Error,
+            "terrible" => MudBlazor.Color.Dark,
+            _ => MudBlazor.Color.Default
+        };
+    }
+
+    private void SelectMood(string mood)
+    {
+        selectedMood = mood;
+    }
+
+    private void NavigateToEntry(DateTime date)
+    {
+        NavigationManager.NavigateTo($"/journal");
+    }
+
+    public class JournalEntryPreview
+    {
+        public string Title { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public int WordCount { get; set; }
+        public string Mood { get; set; } = string.Empty;
+    }
+
+    public class MoodOption
+    {
+        public string Label { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public MudBlazor.Color Color { get; set; }
     }
 }

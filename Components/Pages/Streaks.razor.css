@@ -1,0 +1,68 @@
+.streak-card-primary {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 87, 34, 0.1) 100%);
+}
+
+.activity-calendar {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 8px 0;
+}
+
+.activity-week {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activity-day {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+.activity-day:hover {
+    transform: scale(1.2);
+    outline: 2px solid var(--mud-palette-primary);
+}
+
+.activity-none {
+    background-color: var(--mud-palette-background-grey);
+}
+
+.activity-low {
+    background-color: rgba(76, 175, 80, 0.3);
+}
+
+.activity-medium {
+    background-color: rgba(76, 175, 80, 0.6);
+}
+
+.activity-high {
+    background-color: rgba(76, 175, 80, 1);
+}
+
+.activity-future {
+    background-color: transparent;
+    border: 1px dashed var(--mud-palette-divider);
+}
+
+.achievement-card {
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.achievement-unlocked {
+    border-color: var(--mud-palette-success);
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.achievement-locked {
+    opacity: 0.5;
+}
+
+.achievement-unlocked:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}

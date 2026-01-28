@@ -1,5 +1,6 @@
 using Journal.Components.Pages;
 using Journal.Dialogs;
+using Journal.Services;
 using MudBlazor;
 
 namespace Journal.Components.Buttons;
@@ -27,7 +28,7 @@ public partial class LogoutButton
 
         if (!result.Canceled)
         {
-            // TODO: AuthService.LogOut();
+            AuthService.Logout();
             Snackbar.Clear();
             Snackbar.Add("Logged out!", Severity.Success);
             NavigationManager.NavigateTo(Login.Route, replace: true);

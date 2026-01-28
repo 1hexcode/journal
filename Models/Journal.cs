@@ -9,6 +9,8 @@ public class Journal: IModel, ICloneable
     [PrimaryKey]
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    
+    public string Title { get; set; }
     public DateTime Date { get; set; } // Only date part (one entry per day)
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -33,6 +35,7 @@ public class Journal: IModel, ICloneable
         {
             Id = Id,
             UserId = UserId,
+            Title = Title,
             Date = Date,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt,

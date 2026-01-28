@@ -1,9 +1,11 @@
+@using Journal.Repository
 @using Journal.Services
 @attribute [Route(Streaks.Route)]
 
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject  StreaksRepository StreaksRepository
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
 
@@ -168,116 +170,24 @@
 
 </MudContainer>
 
-<style>
-    .streak-card-primary {
-        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 87, 34, 0.1) 100%);
-    }
-
-    .activity-calendar {
-        display: flex;
-        gap: 4px;
-        overflow-x: auto;
-        padding: 8px 0;
-    }
-
-    .activity-week {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .activity-day {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-        transition: all 0.2s;
-    }
-
-    .activity-day:hover {
-        transform: scale(1.2);
-        outline: 2px solid var(--mud-palette-primary);
-    }
-
-    .activity-none {
-        background-color: var(--mud-palette-background-grey);
-    }
-
-    .activity-low {
-        background-color: rgba(76, 175, 80, 0.3);
-    }
-
-    .activity-medium {
-        background-color: rgba(76, 175, 80, 0.6);
-    }
-
-    .activity-high {
-        background-color: rgba(76, 175, 80, 1);
-    }
-
-    .activity-future {
-        background-color: transparent;
-        border: 1px dashed var(--mud-palette-divider);
-    }
-
-    .achievement-card {
-        border: 2px solid transparent;
-        transition: all 0.3s;
-    }
-
-    .achievement-unlocked {
-        border-color: var(--mud-palette-success);
-        background-color: rgba(76, 175, 80, 0.05);
-    }
-
-    .achievement-locked {
-        opacity: 0.5;
-    }
-
-    .achievement-unlocked:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    }
-</style>
 
 @code {
-    private int currentStreak = 0;
-    private int longestStreak = 0;
-    private int totalEntries = 0;
+   
     private HashSet<DateTime> writingDates = new();
     private List<Achievement> achievements = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AuthService.IsAuthenticated)
         {
             NavigationManager.NavigateTo("/login");
             return;
         }
-
-        LoadStreakData();
+        await LoadStreakData();
         LoadAchievements();
     }
 
-    private void LoadStreakData()
-    {
-        // TODO: Replace with actual data from your JournalEntry service
-        // This is mock data for demonstration
-        
-        totalEntries = 42;
-        currentStreak = 7;
-        longestStreak = 15;
-
-        // Mock writing dates (last 90 days with some gaps)
-        var random = new Random(42); // Fixed seed for consistent demo
-        for (int i = 0; i < 90; i++)
-        {
-            var date = DateTime.Today.AddDays(-i);
-            if (random.Next(0, 3) != 0) // 66% chance of writing
-            {
-                writingDates.Add(date.Date);
-            }
-        }
-    }
+    
 
     private void LoadAchievements()
     {

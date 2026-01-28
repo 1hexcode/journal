@@ -1,7 +1,5 @@
-@attribute [Route(Login.Route)]
-
-@using System.ComponentModel.DataAnnotations
 @using Journal.Services
+@attribute [Route(Login.Route)]
 @layout EmptyLayout
 
 @inject NavigationManager NavigationManager
@@ -93,23 +91,21 @@
     private InputType PasswordInput => isPasswordVisible ? InputType.Text : InputType.Password;
     private string PasswordInputIcon => isPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
     
-    // Preferences.Set("username", "user");
-
-     /*protected override void OnInitialized()
+    /*protected override void OnInitialized()
     {
         base.OnInitialized();
-
-        string username = Preferences.Get("username", "");
-        if (username == "")
+        
+        string email = Preferences.Get("email", "");
+        if (string.IsNullOrEmpty(email))
         {
-            NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo("/login");
         }
         else
         {
             NavigationManager.NavigateTo("/home");
         }
-    }
-    */
+    }*/
+
     private void TogglePasswordVisibility()
     {
         isPasswordVisible = !isPasswordVisible;
@@ -124,6 +120,7 @@
         
         if (success)
         {
+            Preferences.Default.Set("email", email);
             NavigationManager.NavigateTo("/journal");
         }
         else

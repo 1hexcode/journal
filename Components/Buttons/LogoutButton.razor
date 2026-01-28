@@ -1,6 +1,8 @@
+@using Journal.Services
 @inject NavigationManager NavigationManager;
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject AuthService AuthService
 
 <MudTooltip Text="Logout">
     <MudIconButton Icon="@Icons.Material.Filled.Logout"

@@ -1,0 +1,39 @@
+.journal-content {
+    min-height: 200px;
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.journal-content p {
+    margin-bottom: 1rem;
+}
+
+.journal-content h1, .journal-content h2, .journal-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.journal-content ul, .journal-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.journal-content blockquote {
+    border-left: 4px solid var(--mud-palette-primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.cursor-pointer:hover {
+    transform: translateY(-2px);
+}
+
+.text-right {
+    text-align: right;
+}

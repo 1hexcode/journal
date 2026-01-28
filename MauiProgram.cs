@@ -6,12 +6,14 @@ using MudBlazor;
 using MudBlazor.Services;
 using SQLite;
 
+
 namespace Journal;
 
 public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -43,12 +45,15 @@ public static class MauiProgram
         builder.Services.AddSingleton<TagRepository>();  
         builder.Services.AddSingleton<UserRepository>();
         builder.Services.AddSingleton<JournalRepository>();
+        builder.Services.AddSingleton<StreaksRepository>();
 
         
         // Register services
         builder.Services.AddSingleton<UserService>();
         builder.Services.AddSingleton<AuthService>();
         builder.Services.AddScoped<DatabaseSeeder>();
+        builder.Services.AddSingleton<IPdfExportService, PdfExportService>();
+
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

@@ -59,6 +59,13 @@ public class JournalRepository: IRepository<Models.Journal>
         
         return await _db.InsertAsync(entry);
     }
+    public async Task<List<Models.Journal>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        return await _db.Table<Models.Journal>()
+            .Where(j => j.Date >= startDate && j.Date <= endDate)
+            .OrderByDescending(j => j.Date)
+            .ToListAsync();
+    }
     
     public async Task<List<Models.Journal>> GetRecentAsync(int count = 10)
     {
@@ -73,5 +80,13 @@ public class JournalRepository: IRepository<Models.Journal>
     {
         await InitializeAsync();
         return await _db.DeleteAsync(entry);
+    }
+    
+    public async Task<Models.Journal?> GetByIdAsync(Guid id)
+    {
+        await InitializeAsync();
+        return await _db.Table<Models.Journal>()
+            .Where(j => j.Id == id)
+            .FirstOrDefaultAsync();
     }
 }

@@ -1,9 +1,15 @@
 @page "/search"
-@using Journal.Models
+
+@using Journal.Repository
 @using Journal.Services
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject JournalRepository JournalRepository
+@inject IDialogService DialogService
+@inject IPdfExportService PdfExportService
+
+
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
 
@@ -288,40 +294,145 @@
                     </MudText>
                 </MudPaper>
             }
+            <!-- All Journals Section -->
+    <MudDivider Class="my-6" />
 
+    <MudText Typo="Typo.h5" GutterBottom Class="mb-4">
+        📖 All Journal Entries
+    </MudText>
+
+    @if (isLoadingJournals)
+    {
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate />
+            <MudText Class="mt-3">Loading journals...</MudText>
+        </MudPaper>
+    }
+    else if (!allJournals.Any())
+    {
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Color="Color.Secondary" />
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-3">No journals yet</MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Class="mt-3" Href="/journal">
+                Write Your First Entry
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="@PagedJournals" Hover Striped Elevation="2">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Mood</MudTh>
+                <MudTh>Preview</MudTh>
+                <MudTh Style="width: 120px;">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Date">
+                    <MudText Typo="Typo.body2">@context.Date.ToString("MMM dd, yyyy")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Date.ToString("dddd")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Mood">
+                    @if (!string.IsNullOrEmpty(context.PrimaryMood))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="@GetMoodColor(context.PrimaryMood)">
+                            @context.PrimaryMood
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Preview">
+                    <MudText Typo="Typo.body2" Style="max-width: 300px;" Class="text-truncate">
+                        @context.Title
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                    Size="Size.Small"
+                                    Color="Color.Primary"
+                                    OnClick="@(() => NavigationManager.NavigateTo($"/journal/view/{context.Id}"))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary"
+                                   OnClick="@(() => EditJournal(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        @if (totalPages > 1)
+        {
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-4">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Showing @((currentPage - 1) * pageSize + 1)–@Math.Min(currentPage * pageSize, totalJournals) of @totalJournals
+                </MudText>
+                <MudPagination Count="@totalPages" Selected="@currentPage" SelectedChanged="OnPageChanged"
+                               Color="Color.Primary" Variant="Variant.Filled" ShowFirstButton ShowLastButton />
+            </MudStack>
+        }
+    }
         </MudItem>
 
         <!-- Sidebar -->
         <MudItem xs="12" md="4">
             <MudStack Spacing="4">
-
+                <!-- Export -->
+               <MudPaper Elevation="3" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">⚡ Quick Export</MudText>
+    
+                <MudStack Spacing="3">
+                    <!-- Date Range Selection -->
+                    <MudDatePicker Label="Start Date"
+                                  @bind-Date="exportStartDate"
+                                  Variant="Variant.Outlined"
+                                  Dense />
+                    
+                    <MudDatePicker Label="End Date"
+                                  @bind-Date="exportEndDate"
+                                  Variant="Variant.Outlined"
+                                  Dense />
+                    
+                    <MudDivider />
+        
+        <!-- Export Format Buttons -->
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   FullWidth
+                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                   OnClick="ExportToPdf"
+                   Disabled="@(!exportStartDate.HasValue || !exportEndDate.HasValue)">
+            Export as PDF
+        </MudButton>
+        
+        
+        
+        
+                </MudStack>
+            </MudPaper>
+                            
                 <!-- Quick Filters -->
                 <MudPaper Elevation="3" Class="pa-4">
                     <MudText Typo="Typo.h6" Class="mb-3">⚡ Quick Filters</MudText>
                     
                     <MudStack Spacing="2">
                         <MudButton Variant="Variant.Outlined"
-                                  FullWidth
-                                  StartIcon="@Icons.Material.Filled.Today"
-                                  OnClick="@(() => QuickFilter("today"))">
+                                   FullWidth
+                                   StartIcon="@Icons.Material.Filled.Today"
+                                   OnClick="@(() => QuickFilter("today"))">
                             Today's Entry
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
-                                  FullWidth
-                                  StartIcon="@Icons.Material.Filled.DateRange"
-                                  OnClick="@(() => QuickFilter("week"))">
+                                   FullWidth
+                                   StartIcon="@Icons.Material.Filled.DateRange"
+                                   OnClick="@(() => QuickFilter("week"))">
                             This Week
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
-                                  FullWidth
-                                  StartIcon="@Icons.Material.Filled.CalendarMonth"
-                                  OnClick="@(() => QuickFilter("month"))">
+                                   FullWidth
+                                   StartIcon="@Icons.Material.Filled.CalendarMonth"
+                                   OnClick="@(() => QuickFilter("month"))">
                             This Month
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
-                                  FullWidth
-                                  StartIcon="@Icons.Material.Filled.Star"
-                                  OnClick="@(() => QuickFilter("favorites"))">
+                                   FullWidth
+                                   StartIcon="@Icons.Material.Filled.Star"
+                                   OnClick="@(() => QuickFilter("favorites"))">
                             Favorites
                         </MudButton>
                     </MudStack>
@@ -401,216 +512,8 @@
             </MudStack>
         </MudItem>
 
-    </MudGrid>
+   </MudGrid>
+
+    
 
 </MudContainer>
-
-<style>
-    .search-result-card {
-        transition: all 0.3s;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .search-result-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-
-    .search-result-list {
-        transition: all 0.2s;
-    }
-
-    .search-result-list:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .search-preview {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        line-height: 1.6;
-    }
-
-    .search-preview-list {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        line-height: 1.6;
-    }
-
-    .highlight {
-        background-color: rgba(255, 235, 59, 0.5);
-        font-weight: 600;
-        padding: 0 2px;
-        border-radius: 2px;
-    }
-</style>
-
-@code {
-    
-    /*private string searchQuery = "";
-    private DateRange? dateRange = null;
-    private string selectedMood = "";
-    private string wordCountFilter = "all";
-    private string sortBy = "date-desc";
-    private string viewMode = "grid";
-    
-    private bool isSearching = false;
-    private bool hasSearched = false;
-    private List<SearchResult> searchResults = new();
-    private List<string> recentSearches = new() { "gratitude", "work stress", "family time" };
-
-    protected override void OnInitialized()
-    {
-        if (!AuthService.IsAuthenticated)
-        {
-            NavigationManager.NavigateTo("/login");
-            return;
-        }
-    }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await PerformSearch();
-        }
-    }
-
-    private async Task PerformSearch()
-    {
-        if (string.IsNullOrWhiteSpace(searchQuery) && dateRange == null && string.IsNullOrEmpty(selectedMood))
-        {
-            Snackbar.Add("Please enter a search term or select filters", Severity.Warning);
-            return;
-        }
-
-        isSearching = true;
-        hasSearched = false;
-        StateHasChanged();
-
-        // Simulate search delay
-        await Task.Delay(500);
-
-        // TODO: Replace with actual search logic
-        searchResults = GetMockSearchResults();
-
-        // Add to recent searches
-        if (!string.IsNullOrWhiteSpace(searchQuery) && !recentSearches.Contains(searchQuery))
-        {
-            recentSearches.Insert(0, searchQuery);
-            if (recentSearches.Count > 5) recentSearches.RemoveAt(5);
-        }
-
-        isSearching = false;
-        hasSearched = true;
-        StateHasChanged();
-    }
-
-    private void ClearFilters()
-    {
-        searchQuery = "";
-        dateRange = null;
-        selectedMood = "";
-        wordCountFilter = "all";
-        sortBy = "date-desc";
-        hasSearched = false;
-        searchResults.Clear();
-    }
-
-    private void ClearHistory()
-    {
-        recentSearches.Clear();
-        Snackbar.Add("Search history cleared", Severity.Info);
-    }
-
-    private async Task QuickFilter(string filter)
-    {
-        switch (filter)
-        {
-            case "today":
-                dateRange = new DateRange(DateTime.Today, DateTime.Today);
-                break;
-            case "week":
-                dateRange = new DateRange(DateTime.Today.AddDays(-7), DateTime.Today);
-                break;
-            case "month":
-                dateRange = new DateRange(DateTime.Today.AddMonths(-1), DateTime.Today);
-                break;
-        }
-        await PerformSearch();
-    }
-
-    private async Task SearchByTag(string tag)
-    {
-        searchQuery = tag;
-        await PerformSearch();
-    }
-
-    private string HighlightText(string text)
-    {
-        // Simple highlight implementation
-        // TODO: Implement proper HTML highlighting
-        return text.Length > 200 ? text.Substring(0, 200) + "..." : text;
-    }
-
-    private Color GetMoodColor(string mood)
-    {
-        if (mood.Contains("Happy") || mood.Contains("Grateful")) return Color.Success;
-        if (mood.Contains("Sad") || mood.Contains("Frustrated")) return Color.Error;
-        if (mood.Contains("Peaceful")) return Color.Info;
-        return Color.Default;
-    }
-
-    private List<TagData> GetPopularTags()
-    {
-        return new List<TagData>
-        {
-            new("gratitude", 24), new("work", 18), new("family", 15),
-            new("health", 12), new("goals", 10), new("reflection", 8)
-        };
-    }
-
-    private List<SearchResult> GetMockSearchResults()
-    {
-        // TODO: Replace with actual database search
-        var random = new Random();
-        return Enumerable.Range(1, 8).Select(i => new SearchResult
-        {
-            Date = DateTime.Today.AddDays(-random.Next(1, 90)),
-            Content = "Today was an interesting day filled with many thoughts and reflections. I spent time contemplating my goals and the progress I've made so far this year. There were challenges, but also moments of joy and gratitude.",
-            WordCount = random.Next(150, 800),
-            Mood = new[] { "😊 Happy", "😌 Peaceful", "🤗 Grateful" }[random.Next(3)],
-            Tags = new List<string> { "gratitude", "reflection", "goals" }
-        }).ToList();
-    }
-
-    private void ViewEntry(SearchResult entry)
-    {
-        Snackbar.Add($"Viewing entry from {entry.Date:MMM dd}", Severity.Info);
-        // TODO: Navigate to entry detail page
-    }
-
-    private void EditEntry(SearchResult entry)
-    {
-        NavigationManager.NavigateTo($"/journal?date={entry.Date:yyyy-MM-dd}");
-    }
-
-    public class SearchResult
-    {
-        public DateTime Date { get; set; }
-        public string Content { get; set; }
-        public int WordCount { get; set; }
-        public string Mood { get; set; }
-        public List<string> Tags { get; set; } = new();
-    }
-
-    record TagData(string Name, int Count);
-    */
-}

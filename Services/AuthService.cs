@@ -27,7 +27,6 @@ public class AuthService
         if (user == null)
             return false;
         
-        // Simple password check (in production, use hashed passwords!)
         if (user.Password != password)
             return false;
         
@@ -38,6 +37,8 @@ public class AuthService
     // Logout
     public void Logout()
     {
+        Preferences.Remove("email");
+        Preferences.Clear();
         _currentUser = null;
     }
     
