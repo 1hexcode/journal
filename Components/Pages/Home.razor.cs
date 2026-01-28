@@ -187,7 +187,7 @@ public partial class Home
                 Title = "Morning Thoughts",
                 Date = DateTime.Today.AddDays(-3),
                 Content = "Woke up feeling refreshed and ready to tackle the day. Sometimes a good night's sleep makes all the difference.",
-                WordCount = 156,
+                WordCount = 15,
                 Mood = "good"
             }
         };
